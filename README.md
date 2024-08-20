@@ -73,6 +73,7 @@ Recursos extras:
 Obs:
 
 - Sinta-se à vontade para nos contactar a qualquer momento sobre qualquer dúvida, adoraremos ajudar!
+- Se tiver uma dúvida geral, ou queira deixar sua dúvida pública utilize a área de [Issues](https://github.com/patos-ufscar/psel/issues)
 - Não se sinta pressionado em fazer tudo, foque no que se sente confortável
 - Envie mesmo se não conseguir terminar as partes essenciais, documente suas dificuldades
 - Escreva um arquivo de texto/Markdown que descreva seu processo
