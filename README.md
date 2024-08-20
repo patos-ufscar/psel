@@ -26,8 +26,9 @@ Linguagens:
 - Zig
 - Clojure
 - Erlang
+- Qualquer outra desde que não tenha muita coisa pronta (ou seja, não para python ou JS)
 
-(Nossa recomendação é algo tipo C++11, é bem parecido com C, mas deixa mais facil pq tem string, vector, map etc)
+(Nossa recomendação é algo tipo C++11 / Go, é bem parecido com C, mas deixa mais facil pq tem string, vector, map etc)
 
 Lembrando que o objetivo não é ser algo extremamtente complexo, a ideia principal é integrar
 direto com o S.O., ou seja, NÃO utilizar libs que abstraiam demais as interações. Queremos
@@ -36,7 +37,7 @@ a fundo, etc. Quanto mais coisas "prontas" vocês utilizarem, menos coisa teremo
 
 As entregas serão individuais, mas sintam-se à vontade para trabalhar/discutir em grupo.
 
-**O Código deve ser entregue por um repositório no GitHub (ou outro Git), lembre-se de adicionar um README.md**
+**O Código deve ser entregue por um repositório no GitHub, lembre-se de adicionar um README.md**
 
 No final, haverá uma entrevista individual.
 
@@ -69,7 +70,7 @@ Recursos extras:
 - https://en.wikipedia.org/wiki/HTTP
 - https://documentation.help/DogeTool-HTTP-Requests-vt/http_request.htm (ta zuado, mas as fts são boas)
 
-Extras:
+Obs:
 
 - Sinta-se à vontade para nos contactar a qualquer momento sobre qualquer dúvida, adoraremos ajudar!
 - Não se sinta pressionado em fazer tudo, foque no que se sente confortável
