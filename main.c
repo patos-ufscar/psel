@@ -12,14 +12,72 @@
 #include <string.h>
 
 
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
+#include <stdbool.h>
+
 #define MAX_CONNECTIONS 65535
 #define RECV_BUF_SIZE 4096
+
+
+char* getMimeType(const char* filepath)
+{
+    // assumindo application/octet-stream pra tudo pq sim
+    return "application/octet-stream";
+}
+
+void sendDirectory(int client_fd, const char* filepath)
+{
+    return;
+}
+
+
+void sendFile(int client_fd, const char* filepath, struct stat fileStat)
+{
+    // aqui assumimos que o arquivo existe e pode ser lido etc.
+    char buffer[8192];
+    int readBytes;
+    
+    // send important headers
+    char contentHeaders[256];
+    char* mimeType = getMimeType(filepath);
+    send(client_fd, "HTTP/1.1 200 OK\r\n", 17, MSG_DONTWAIT | MSG_MORE);
+    sprintf(contentHeaders, "Content-Length: %lu\r\nContent-Type: %s\r\n", fileStat.st_size, mimeType);
+    send(client_fd, contentHeaders, strlen(contentHeaders), MSG_DONTWAIT | MSG_MORE);
+    send(client_fd, "\r\n", 2, MSG_DONTWAIT | MSG_MORE);
+    FILE* file = fopen(filepath, "rb");
+    while((readBytes = fread(buffer, sizeof(char), sizeof(buffer), file)) == sizeof(buffer))
+    {
+        // dont wait pra ser mais rapido
+        send(client_fd, buffer, readBytes, MSG_DONTWAIT | MSG_MORE);
+    }
+    // enviar o ultimo pacote caso haja
+    if(readBytes)
+    {
+        send(client_fd, buffer, readBytes, MSG_DONTWAIT | MSG_MORE);
+    }
+
+    // de acordo com a documentação da microsoft
+    // neste estágio o arquivo pode ter dado algum erro de leitura
+    // ou apenas ter terminado de ser lido, portanto é necessário checar
+
+    if(feof(file))
+    {
+        // aqui o arquivo foi lido mesmo!!
+        send(client_fd, "\r\n\r\n", 4, 0);
+    }
+    // caso haja erros
+    // aqui o header ja foi enviado então não tem como
+    // "salvar" o request
+    close(client_fd);
+}
 
 
 void sendResponse(int client_fd, const char* response, const char* filepath)
 {
     send(client_fd, response, strlen(response), 0);
-    //sendFile();
+    //sendFile(); remover linha de baixo
     send(client_fd, "\r\n\r\n", 4, MSG_DONTWAIT);
     close(client_fd);
 }
@@ -69,13 +127,47 @@ void handle_client(int client_fd)
 
     // se o path for um diretório retornar aquele mostrador bonitinho de arquivos
     // como em https://mirror.ufscar.br/
-    // dps faço essa parte, agr é hora de commit!!
 
-    // retorno teste
-    const char msgF[] = "HTTP/1.1 200 OK\r\n\r\n<h1>%s</h1>\r\n\r\n";
-    char msg[512];
-    sprintf(msg, msgF, PATH);
-    send(client_fd, msg, strlen(msg), 0);
+
+    // este pedaço de código é necessário para 
+    // transformar o caminho oferecido pelo cliente ex: /arquivo
+    // em algo utilizavel pelo so ex: ./arquivo
+    char* DOTPATH;
+    DOTPATH = malloc(sizeof(char) * strlen(PATH));
+    if(DOTPATH == NULL)
+    {
+        perror("Não foi possível alocar memória");
+        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+        return;
+    }
+    DOTPATH[0] = '.';
+    strcat(DOTPATH, PATH);
+
+
+    // https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
+    struct stat pathStat;
+
+    int statCode = stat(DOTPATH, &pathStat);
+    switch(statCode)
+    {
+        case 0:
+            break;
+        case EACCES:
+            // punish user bc they tried to hack the server
+            sendResponse(client_fd, "HTTP/1.1 200 OK", "");
+            return;
+        default:
+            // algo deu errado no servidor
+            return sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+    }
+
+    if (S_ISDIR(pathStat.st_mode))
+    {
+        sendDirectory(client_fd, DOTPATH);
+    }else{
+        sendFile(client_fd, DOTPATH, pathStat);
+    }
+
     close(client_fd);
 }
 
