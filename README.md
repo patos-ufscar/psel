@@ -2,6 +2,8 @@
 
 19 Agosto 2024 - ~~02 Setembro 2024~~ 09 Setembro 2024
 
+A data final foi adiada uma semana, mas sinta-se livre para abir o PR quando quiser.
+
 ---
 
 Dê um fork neste repositório e desenvolva nele. Quando estiver pronto, abra um PR.
