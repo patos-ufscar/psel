@@ -1,6 +1,6 @@
 # PATOS PSEL
 
-19 Agosto 2024 - 02 Setembro 2024
+19 Agosto 2024 - ~~02 Setembro 2024~~ 09 Setembro 2024
 
 ---
 
