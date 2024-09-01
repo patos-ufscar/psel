@@ -10,9 +10,6 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 .mvn/wrapper/maven-wrapper.properties
 
-# Unecessary
-test/
-
 # Compiled files
 *.class
 
@@ -23,3 +20,6 @@ test/
 *.jar
 *.war
 *.ear
+
+# IDE files
+.vscode/
