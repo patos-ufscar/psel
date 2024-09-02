@@ -27,14 +27,64 @@ char* getMimeType(const char* filepath)
     return "application/octet-stream";
 }
 
-void sendDirectory(int client_fd, const char* filepath)
+void sendDirectory(int client_fd, const char* dirpath)
 {
-    return;
+    char tempBuffer[1024];
+
+    struct stat tempStat;
+
+    DIR* dir = opendir(dirpath);
+    struct dirent* temp;
+
+    send(client_fd, "HTTP/1.1 200 OK\r\n\r\n", 19, MSG_DONTWAIT | MSG_MORE);
+    // html roubado do mirrors.ufscar
+    const char htmlBeg[] = "<html><head><title>Index of %s</title></head><body><h1>Index of %s</h1><table><tr><th valign=\"top\"><img src=\"/icons/blank.gif\" alt=\"[ICO]\"></th><th><a href=\"?C=N;O=D\">Name</a></th><th><a href=\"?C=M;O=A\">Last modified</a></th><th><a href=\"?C=S;O=A\">Size</a></th></tr> <tr><th colspan=\"4\"><hr></th></tr>";
+    //                          gambiarra pra apagar o primeiro caracter
+    sprintf(tempBuffer, htmlBeg, dirpath+1, dirpath+1);
+    send(client_fd, tempBuffer, strlen(tempBuffer), MSG_DONTWAIT | MSG_MORE);
+    printf("%s\r\n", dirpath);
+    
+    bool isDir;
+    while((temp = readdir(dir)) != NULL)
+    {
+        if(strcmp(temp->d_name, ".") == 0) continue;
+        if(strcmp(temp->d_name, "..") == 0){
+            send(client_fd, "<tr><td valign=\"top\"><img src=\"/icons/parent-dir.gif\" alt=\"[DIR]\"></td><td><a href=\"../\">Parente Dir</a></td><td align=\"right\">tiem</td><td align=\"right\"> 0.00 </td><td>&nbsp;</td></tr>", 180, 0);
+            continue;
+        }
+
+        sprintf(tempBuffer, "%s/%s", dirpath, temp->d_name);
+        if(stat(tempBuffer, &tempStat) != 0)
+        {
+            // houve algum erro ao ler o arquivo n sei pq
+            continue;
+        }
+        isDir = S_ISDIR(tempStat.st_mode);
+
+        printf(" -> %s\r\n", temp->d_name);
+        sprintf(
+            tempBuffer,
+            "<tr><td valign=\"top\"><img src=\"/icons/%s.gif\" alt=\"[%s]\"></td><td><a href=\"%s%s%s\">%s</a></td><td align=\"right\">%s</td><td align=\"right\"> %.2f </td><td>&nbsp;</td></tr>",
+            isDir ? "folder" : "file", isDir ? "DIR" : "FIL", dirpath+1, temp->d_name, S_ISDIR(tempStat.st_mode) ? "/" : "", temp->d_name, "tiem", tempStat.st_ctime);
+        send(client_fd, tempBuffer, strlen(tempBuffer), MSG_DONTWAIT | MSG_MORE);
+    }
+    send(client_fd, "<tr><th colspan=\"5\"><hr></th></tr></table></body></html>", 56, MSG_DONTWAIT | MSG_MORE);
+    send(client_fd, "\r\n\r\n", 4, 0);
+    close(client_fd);
+    // chamar closedir nao funciona n sei pq
+    // closedir(dir);
 }
 
 
 void sendFile(int client_fd, const char* filepath, struct stat fileStat)
 {
+    FILE* file = fopen(filepath, "rb");
+    if(file == NULL)
+    {
+        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+        return;
+    }
+
     // aqui assumimos que o arquivo existe e pode ser lido etc.
     char buffer[8192];
     int readBytes;
@@ -46,7 +96,6 @@ void sendFile(int client_fd, const char* filepath, struct stat fileStat)
     sprintf(contentHeaders, "Content-Length: %lu\r\nContent-Type: %s\r\n", fileStat.st_size, mimeType);
     send(client_fd, contentHeaders, strlen(contentHeaders), MSG_DONTWAIT | MSG_MORE);
     send(client_fd, "\r\n", 2, MSG_DONTWAIT | MSG_MORE);
-    FILE* file = fopen(filepath, "rb");
     while((readBytes = fread(buffer, sizeof(char), sizeof(buffer), file)) == sizeof(buffer))
     {
         // dont wait pra ser mais rapido
@@ -133,7 +182,7 @@ void handle_client(int client_fd)
     // transformar o caminho oferecido pelo cliente ex: /arquivo
     // em algo utilizavel pelo so ex: ./arquivo
     char* DOTPATH;
-    DOTPATH = malloc(sizeof(char) * strlen(PATH));
+    DOTPATH = malloc(sizeof(char) * (strlen(PATH) + 1));
     if(DOTPATH == NULL)
     {
         perror("Não foi possível alocar memória");
@@ -168,6 +217,7 @@ void handle_client(int client_fd)
         sendFile(client_fd, DOTPATH, pathStat);
     }
 
+    free(DOTPATH);
     close(client_fd);
 }
 
@@ -181,7 +231,7 @@ int main()
     // equavalente a
     // inet_aton("127.0.0.1", &server_addr.sin_addr);
     // server_addr.sin_addr.s_addr = inet_network("127.0.0.1");
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
     // é melhor utilizar inet_aton pois de acordo com
     // https://www.gta.ufrj.br/ensino/eel878/sockets/inet_ntoaman.html
