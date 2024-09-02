@@ -21,6 +21,8 @@
 #define RECV_BUF_SIZE 4096
 
 
+void sendResponse(int client_fd, const char* response, const char* message);
+
 char* getMimeType(const char* filepath)
 {
     // assumindo application/octet-stream pra tudo pq sim
@@ -70,6 +72,8 @@ void sendDirectory(int client_fd, const char* dirpath)
     }
     send(client_fd, "<tr><th colspan=\"5\"><hr></th></tr></table></body></html>", 56, MSG_DONTWAIT | MSG_MORE);
     send(client_fd, "\r\n\r\n", 4, 0);
+    printf("[*] Closing connection with [%d]\n", client_fd);
+    shutdown(client_fd, SHUT_RDWR);
     close(client_fd);
     // chamar closedir nao funciona n sei pq
     // closedir(dir);
@@ -81,7 +85,7 @@ void sendFile(int client_fd, const char* filepath, struct stat fileStat)
     FILE* file = fopen(filepath, "rb");
     if(file == NULL)
     {
-        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "Algum problema ocorreu tentando ler o arquivo resuisitado");
         return;
     }
 
@@ -119,15 +123,22 @@ void sendFile(int client_fd, const char* filepath, struct stat fileStat)
     // caso haja erros
     // aqui o header ja foi enviado então não tem como
     // "salvar" o request
+    shutdown(client_fd, SHUT_RDWR);
+    while(read(client_fd, buffer, 8192)){};
     close(client_fd);
+    fclose(file); // tinha esquecido de fechar o arquivo 💀
 }
 
 
-void sendResponse(int client_fd, const char* response, const char* filepath)
+void sendResponse(int client_fd, const char* response, const char* message)
 {
     send(client_fd, response, strlen(response), 0);
     //sendFile(); remover linha de baixo
-    send(client_fd, "\r\n\r\n", 4, MSG_DONTWAIT);
+    send(client_fd, "\r\n\r\n", 4, MSG_DONTWAIT | MSG_MORE);
+    send(client_fd, message, strlen(message), MSG_DONTWAIT | MSG_MORE);
+    send(client_fd, "\r\n\r\n", 4, 0);
+    printf("[*] Closing connection with [%d]\n", client_fd);
+    shutdown(client_fd, SHUT_RDWR);
     close(client_fd);
 }
 
@@ -146,7 +157,8 @@ void handle_client(int client_fd)
     {
         // isso significa que não conseguimos ler o pacote inteiro
         // retornar 500 internal server error
-        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+        printf("[!] Couldn't read full packet\n");
+        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "Não foi possível ler todo o pacote");
         return;
     }
 
@@ -155,6 +167,7 @@ void handle_client(int client_fd)
 
     char* tokPtr; // este ponteiro é exclusivo para uso da funcao strtok_r
     char* startLine = strtok_r(buffer, "\r\n", &tokPtr); // strtok retorna a primeira linha
+    printf("\t[%d] %s\n", client_fd, startLine);
 
     // primeiro é necessário fazer o parsing e processamento do METHOD, PATH e HTTPVERSION,
     // pois a função strok_r modifica o buffer (primeiro argumento) 
@@ -186,7 +199,7 @@ void handle_client(int client_fd)
     if(DOTPATH == NULL)
     {
         perror("Não foi possível alocar memória");
-        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+        sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "Não foi possível alocar memória");
         return;
     }
     DOTPATH[0] = '.';
@@ -207,7 +220,9 @@ void handle_client(int client_fd)
             return;
         default:
             // algo deu errado no servidor
-            return sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", "");
+            char msg[512];
+            sprintf(msg, "Stat deu algum erro utilizando o caminho [%s] produziu [%d]", DOTPATH, errno);
+            return sendResponse(client_fd, "HTTP/1.1 500 Internal Server Error", msg);
     }
 
     if (S_ISDIR(pathStat.st_mode))
@@ -219,6 +234,7 @@ void handle_client(int client_fd)
 
     free(DOTPATH);
     close(client_fd);
+    printf("[*] Closing connection [%d]\n", client_fd);
 }
 
 
@@ -240,7 +256,7 @@ int main()
     // neste caso entretanto estou criando o endereço para o servidor então o ip nunca será 255.255.255.255
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(8080);
+    server_addr.sin_port = htons(8000);
 
 
     int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
@@ -272,6 +288,7 @@ int main()
         perror("listen nao funcono");
         exit(-1);
     }
+    printf("[*] Listening at http://%s:%d\n", inet_ntoa(server_addr.sin_addr), htons(server_addr.sin_port));
 
 
     while(true)
@@ -282,7 +299,7 @@ int main()
         
         // o casting aqui é necessário pois a funcão accept é comum a vários protocolos e sockaddr_in é específico de IPv4
         int client_fd = accept(server_fd, (struct sockaddr*)&client_sockaddr_in, &client_addr);
-
+        printf("[*] New connection [%d] from %s:%d\n", client_fd, inet_ntoa(client_sockaddr_in.sin_addr), ntohs(client_sockaddr_in.sin_port));
         handle_client(client_fd);
     }
 
