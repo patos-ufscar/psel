@@ -14,6 +14,7 @@ import (
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
+    // Cria um buffer para ler da conexão
 	reader := bufio.NewReader(conn)
 	requestLine, err := reader.ReadString('\n')
 	if err != nil {
@@ -27,9 +28,9 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
+    // Separa a primeira linha, tratando a URL recebida
 	method := requestParts[0]
 	urlPath := requestParts[1]
-
 	urlPath = strings.TrimPrefix(urlPath, "/")
 	pathParts := strings.SplitN(urlPath, "/", 2)
 
@@ -39,10 +40,10 @@ func handleConnection(conn net.Conn) {
 		conn.Write([]byte("HTTP/1.1 400 Bad Request\r\n\r\n"))
 		return
 	}
-
 	username := pathParts[0]
 	fileName := pathParts[1]
 
+    // Cria as pastas necessárias os usuários
     baseDir := "./arquivos"
     os.Mkdir(baseDir, 0755)
 	userDir := fmt.Sprintf("%s/%s", baseDir, username)
@@ -82,7 +83,7 @@ func handleGetRequest(conn net.Conn, userDir string, fileName string) {
 	}
 	defer file.Close()
 
-	// Cabeçalho
+	// Cabeçalho da requisição
 	header := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Disposition: attachment; filename=%s\r\n\r\n", fileName)
     conn.Write([]byte(header))
 
@@ -107,7 +108,7 @@ func handlePostRequest(conn net.Conn, reader *bufio.Reader, userDir string, file
 			conn.Write([]byte("HTTP/1.1 400 Bad Request\r\n\r\n"))
 			return
 		}
-        // Fim do cabeçalho
+        // Fim do cabeçalho (começa o body agr)
 		if line == "\r\n" {
 			break
 		}
@@ -125,7 +126,7 @@ func handlePostRequest(conn net.Conn, reader *bufio.Reader, userDir string, file
 }
 
 func main() {
-    // Escuta na porta 8080
+    // Escuta as requisições na porta 8080
 	listener, err := net.Listen("tcp", "localhost:8080")
 	if err != nil {
 		log.Fatalf("Erro ao iniciar o servidor: %v", err)
