@@ -3,7 +3,8 @@
 O código desenvolvido é uma sistema de arquivos simples com um proxy reverso para interceptar as solicitações. O sistema funciona da seguinte forma:
 - Cria um listener para ficar escutando na porta 8080
 - Ao receber uma requisição, lê o cabeçalho para saber como tratá-la
-- Verifica o método: se for POST adiciona um arquivo, se for GET lê o arquivo do caminho informado
+- Verifica o método: se for POST adiciona um arquivo, se for GET lê o arquivo do caminho informado  
+(Ao entrar na url pelo navegador, o arquivo é baixado)
   
 **OBSERVAÇÃO:** A requisição deve ser feita para um diretório (simulando o diretório de arquivos de um usuário) e para um nome de arquivo, por exemplo:
 
