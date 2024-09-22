@@ -12,6 +12,8 @@ buildNumber.properties
 
 # Compiled files
 *.class
+*.exe
+main
 
 # Logs
 *.log
