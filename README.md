@@ -23,12 +23,15 @@ Para inicializar o backend é necessário compilar e executar o main.c
 
 Execute no terminal:
 ```
-gcc main.c -o main && ./main
+cd backend_c
+gcc main.c -o main
+./main
 ```
 
 
 Ou no cmd:
 ```
+cd backend_c
 gcc main.c -o main -lws2_32
 .\main.exe
 ```
