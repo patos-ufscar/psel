@@ -1,7 +1,5 @@
 package com.ufscar.psor;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,7 +11,6 @@ public class Main {
     private static final int PORT = 8080;
     private static final String PROXY_ADRESS = "localhost";
     private static final int PROXY_PORT = 8081;
-    private static final String ROOT = "reverse-proxy-file-server/public"; // diretorio base para os arquivos
     private static final String INDEX = "index.html"; // nome do arquivo
 
     public static void main(String[] args) {
@@ -60,16 +57,15 @@ public class Main {
                 requestedFile = "/" + INDEX;
             }
 
-            // caminho do arquivo solicitado parseado
-            File file = new File(ROOT + requestedFile);
+            InputStream fileStream = Main.class.getClassLoader().getResourceAsStream(requestedFile.substring(1));
 
             //debug
             //System.out.println("arquivo solicitado: " + file.getAbsolutePath());
 
             if (requestedFile.equals("/proxy")) {
                 handleProxyRequest(request, outputStream);
-            } else if (file.exists() && !file.isDirectory()) {
-                handleLocalRequest(file, outputStream);
+            } else if (fileStream != null) {
+                handleLocalRequest(fileStream, outputStream);
             } else {
                 String notFound = "HTTP/1.1 404 Not Found\r\n\r\n<h1>404 File Not Found locally</h1>";
                 outputStream.write(notFound.getBytes());
@@ -81,19 +77,15 @@ public class Main {
         }
     }
 
-    public static void handleLocalRequest(File file, OutputStream outputStream) throws IOException {
+    public static void handleLocalRequest(InputStream fileStream, OutputStream outputStream) throws IOException {
         
         outputStream.write("HTTP/1.1 200 OK\r\n".getBytes());
         outputStream.write("Content-Type: text/html\r\n\r\n".getBytes());
         
-        try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] buffer = new byte[2048];
-            int bytesRead;
-            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
+        byte[] buffer = new byte[2048];
+        int bytesRead;
+        while ((bytesRead = fileStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, bytesRead);
         }
     }
 
