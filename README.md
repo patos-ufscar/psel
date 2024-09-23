@@ -1,83 +1,101 @@
-# PATOS PSEL
+# Reverse Proxy p/ Servidor de arquivos
 
-19 Agosto 2024 - ~~02 Setembro 2024~~ 09 Setembro 2024
 
-A data final foi adiada uma semana, mas sinta-se livre para abir o PR quando quiser.
+Esse repositório possui dois programas implementados a fim de participar do processo seletivo do grupo patos/pombos da UFSCar, eles consistem em:
+- Um Reverse Proxy implementado em Java, capaz de parsear requisições e fornecer arquivos locais;
+- Um backend implementado em C, capaz de receber requisições HTTP e entregar arquivos;
 
----
 
-Dê um fork neste repositório e desenvolva nele. Quando estiver pronto, abra um PR.
+## Compilação e instalação
 
-Deve ser desenvolvido um `Reverse Proxy/Servidor de Arquivos` (a partir de `Berkley Sockets`) em sua linguagem de preferência, de qualquer forma, é preciso conseguir acessá-la de um navegador (HTTP).
 
-[**sem lib dmais** -> PRECISA fazer o parsing do HTTP na mão].
-Não é pra fazer assim:
+Para a instalação completa do software desse repositório, é necessário fazer a compilação de ambos os programas separadamente.
 
-```py
-from thingdoer import ThingDoer
 
-ThingDoer.do_thing()
+### backend_c
+
+
+Para inicializar o backend é necessário compilar e executar o main.c
+
+
+- O programa é compatível tanto com Windows quanto Linux
+
+
+Execute no terminal:
+```
+cd backend_c
+gcc main.c -o main
+./main
 ```
 
-Linguagens:
 
-- C/C++
-- ASM
-- Go
-- Rust
-- Zig
-- Clojure
-- Erlang
-- Qualquer outra desde que não tenha muita coisa pronta (ou seja, não para python ou JS)
+Ou no cmd:
+```
+cd backend_c
+gcc main.c -o main -lws2_32
+.\main.exe
+```
 
-(Nossa recomendação é algo tipo C++11 / Go, é bem parecido com C, mas deixa mais facil pq tem string, vector, map etc)
 
-Lembrando que o objetivo não é ser algo extremamtente complexo, a ideia principal é integrar
-direto com o S.O., ou seja, NÃO utilizar libs que abstraiam demais as interações. Queremos
-saber o que vocês acharam difícil, como resolveram, onde acharam que poderiam ter ido mais
-a fundo, etc. Quanto mais coisas "prontas" vocês utilizarem, menos coisa teremos para te avaliar, lembre-se disso.
+Com isso o programa estará em execução em `localhost:8081`, caso queira mudar a porta, ela pode ser encontrada como um `#define` em `main.c`
 
-As entregas serão individuais, mas sintam-se à vontade para trabalhar/discutir em grupo.
 
-**O Código deve ser entregue por um repositório no GitHub, lembre-se de adicionar um README.md**
+### reverse-proxy-file-server
 
-No final, haverá uma entrevista individual.
 
-Pontos de Avaliação Essenciais:
+Para inicializar o Reverse Proxy é necessário compilar o arquivo Java.
+ - Nas versões mais recentes do java, podemos compilar e executar um arquivo .java apenas utilizando o comando `java` sem a necessidade de executar `javac`
 
-- **HTTP compliant (conseguir acessar pelo navegador)**
-- **Documentação**
-- **Colaboração (documentar fontes de informação/código, informar sua jornada)**
-- **Organização e Versionamento de Código**
-- **Experiência num Geral, não apenas código**
 
-Pontos de Avaliação Extras (faça oq conseguir/quiser, são apenas pontos para vocês se interessarem,
-não precisam ser explorados):
+ Portanto, deve-se executar no cmd, ou terminal:
+ ```
+ java -cp .\reverse-proxy-file-server\resources .\reverse-proxy-file-server\src\main\java\com\ufscar\psor\Main.java
+ ```
+Com isso o programa estará em execução em `localhost:8080`, caso queira mudar a porta, ela pode ser encontrada como um `private static final` em `Main.java`
 
-- testes
-- host validation
-- max connections
-- num workers
-- tratamento de erros
-- memory safety
-- deploy (compilação, empacotamento)
-- telemetria/SRE
+ ## Teste e utilização
 
-Recursos extras:
 
-- https://www.youtube.com/watch?v=iuwSYRdxKjQ
-- https://beej.us/guide/bgnet/html/split/
-- https://github.com/mr21/strsplit.c
-- https://developer.mozilla.org/en-US/docs/Web/HTTP
-- https://en.wikipedia.org/wiki/HTTP
-- https://documentation.help/DogeTool-HTTP-Requests-vt/http_request.htm (ta zuado, mas as fts são boas)
+ Após inicializar ambos os programas, pode-se ler no terminal em qual porta eles estão sendo executados
+ - `8080` e `8081` por padrão
+ 
+ Então, pode-se utilizar qualquer navegador e acessar `http://localhost:8080/` para ter acesso a Index page que te de acesso a navegar pelos arquivos.
+ - É possível também fazer requests manualmente por ferramentas como netcat
 
-Obs:
 
-- Sinta-se à vontade para nos contactar a qualquer momento sobre qualquer dúvida, adoraremos ajudar!
-- Se tiver uma dúvida geral, ou queira deixar sua dúvida pública utilize a área de [Issues](https://github.com/patos-ufscar/psel/issues)
-- Não se sinta pressionado em fazer tudo, foque no que se sente confortável
-- Envie mesmo se não conseguir terminar as partes essenciais, documente suas dificuldades
-- Escreva um arquivo de texto/Markdown que descreva seu processo
+ Os terminais nos quais os programas estão sendo executados fornecem informações sobre os clientes que estão conectando-se.
 
-> Lembrando que o processo é pra ser bem de boa, queremos ver até onde conseguem ir/se empurram, sem preocupação em fazer todos os essenciais.
+
+ ## Fontes
+
+
+ Grande parte do conteúdo puro sobre HTTP e requests foram adquiridos nas [aulas do patos](https://www.youtube.com/watch?v=iuwSYRdxKjQ), para além disso
+- [Wikipedia](https://en.wikipedia.org/wiki/HTTP), para trabalhar com requests
+- [StackOverflow](https://stackoverflow.com/), para grande partes dos problemas com Java
+- [Oracle](https://docs.oracle.com/en/), para encontrar as bibliotecas necessárias
+
+
+ ## Experiência pessoal sobre o projeto
+
+
+Antes de iniciar o desenvolvimento desse projeto eu não tinha conhecimento algum sobre redes, muito menos sobre API's e Proxys, eu estava apenas na fase "da faculdade" de fazer programas que fazem contas ou estruturas de dados. Confesso que o início do desenvolvimento foi desafiador, um pouco até mais do que eu esperava, e um pouco assustador, devido a mudança de perspectiva do que estava sendo feito, o foco não era mais "executar" e sim integrar diferentes funcionalidades.
+
+
+Porém, apesar de ter sido ameaçador no início, foi um ótimo projeto para eu finalmente tirar a pulga atrás da orelha que eu tinha sobre quando as matérias da faculdade "fariam sentido" juntas. Eu aproveitei essa oportunidade de fazer um programa que ja era integrado em múltiplas camadas para tentar fazer pela primeira fez um projeto que envolvia mais de uma linguagem de programação, o que foi realmente o ponto alto do projeto na minha opnião, ver dois programas que eram completamente independentes até o momento, funcionando em conjunto em tempo real, em uma aplicação web.
+
+
+No geral acho que foi o empurrão que faltava para eu entrar nas tecnologias mais novas e reais de programação e sair um pouco da caixa da faculdade, por mais que tenha dado bastante trabalho valeu bastante a pena, para ter a liberdade de testar coisas novas sem a pressão da avaliação da universidade.
+
+
+### Planos Futuros
+
+
+Algumas coisas que eu gostaria de ter implementado porém não houve tempo foram:
+- O parseamento "correto" das requisições de proxy, ao invés de utilizar de hard-coding para parsear a request ao back end
+- Permitir o acesso ao um servidor de arquivos propriamente dito quando acessar o proxy, ao invés de apenas um arquivo
+- Fazer mais controles de erro e conexões relacionados ao servidor Proxy, como limite de conexões, conexões válidas etc...
+
+
+Algo também importante porém não muito relacionado ao projeto original é:
+- Abusar mais da orientação a objeto, como não programava em nada além de C a um tempo, acabei não utilizando muitas funcionalidades que o Java proporciona (apenas 1 classe...).
+
