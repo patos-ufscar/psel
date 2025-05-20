@@ -1,0 +1,35 @@
+# Binários compilados
+*.exe
+*.out
+*.o
+*.a
+*.so
+*_bin
+
+# Go Modules dependencies
+/vendor/
+
+# Cache and build from Go
+/bin/
+/pkg/
+go.sum
+
+# Temp files
+*.swp
+*.swo
+*.bak
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# Random testers files
+test_server1.go
+test_server2.go
+logs_proxy.go
+simple_proxy.go
+t_proxy.go
+9000
+*.txt
+*.log
+run_all.sh
