@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	telegramToken = "7913053052:AAFYobTmDYMRDcSJfGnwR5PJ2nkAuD4hKMc" // token do telegram bot
-	chatID        = "1006182052"                                     // ID do seu chat pessoal do Telegram
+	telegramToken = "BOT_TOKEN" // token do telegram bot
+	chatID        = "CHAT_ID"                                     // ID do seu chat pessoal do Telegram
 )
 
 func sendTelegramMessage(message string) {
