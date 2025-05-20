@@ -1,7 +1,5 @@
 # Reverse Proxy com Alerta no Telegram
 
-This reverse proxy monitors incoming and outgoing connections, sending real-time notifications to a Telegram bot whenever a connection is established or closed. It also logs the exchanged messages, providing visibility into network traffic.
-
 Este projeto é uma implementação simples de um **Reverse Proxy** com notificações de alertas via **Telegram** para notificar eventos importantes, como novas conexões e erros, além de receber um log das mensagens trocadas durante a conexão. Ele consiste em três componentes principais: um **servidor**, um **proxy** e um **cliente**.
 
 ## Tecnologias Utilizadas
