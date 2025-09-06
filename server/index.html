@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Servidor de Arquivos</title>
+</head>
+<body>
+  <h1>Servidor de Arquivos</h1>
+
+  <h2>📂 Baixar arquivo</h2>
+  <form method="GET" action="/download">
+    <label for="filename">Nome do arquivo:</label>
+    <input type="text" id="filename" name="file" placeholder="ex: teste.txt">
+    <button type="submit">Baixar</button>
+  </form>
+
+  <hr>
+
+  <h2>📤 Enviar arquivo</h2>
+  <form method="POST" action="/upload" enctype="multipart/form-data">
+    <input type="file" name="uploadfile">
+    <button type="submit">Enviar</button>
+  </form>
+</body>
+</html>
