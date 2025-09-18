@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"net"
+
+	"github.com/oeduardopereira/psel/common"
 )
 
 func main() {
-	listener, err := net.Listen(NETWORK, ADDR)
+	listener, err := net.Listen(common.NETWORK, common.ADDR_SERVER)
 
 	if err != nil {
 		fmt.Println("Error to listen ->", err)
@@ -15,7 +17,7 @@ func main() {
 
 	defer listener.Close()
 
-	fmt.Println("Server is linstening on port 8080!")
+	fmt.Println("Server is linstening on port", common.ADDR_SERVER)
 
 	for {
 		conn, err := listener.Accept()
@@ -25,7 +27,7 @@ func main() {
 			return
 		}
 
-		go ConnectionHandler(conn)
+		go common.ConnectionHandler(conn)
 
 	}
 }
