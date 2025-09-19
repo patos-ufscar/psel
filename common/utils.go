@@ -38,7 +38,7 @@ func RequestInfos(conn net.Conn) (string, string, string, error) {
 		ErrorHttpHandler(conn, METHOD_NOT_ALLOWED_STATUS)
 	}
 
-	if action != "/proxy/download" && action != "/proxy" && action != "/proxy/upload" {
+	if action != "/download" && action != "/" && action != "/upload" {
 		ErrorHttpHandler(conn, NOT_FOUND_STATUS)
 	}
 

@@ -79,3 +79,7 @@ Obs:
 - Escreva um arquivo de texto/Markdown que descreva seu processo
 
 > Lembrando que o processo é pra ser bem de boa, queremos ver até onde conseguem ir/se empurram, sem preocupação em fazer todos os essenciais.
+
+
+
+antes de rodar script para gerar os certificados, chaves e autoridade certificadora, em um terminal, digite o comando 'chmod +x gen-keys-script.sh' para dar a permissao necessaria para o script

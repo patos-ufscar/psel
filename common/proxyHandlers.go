@@ -1,48 +1,70 @@
 package common
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net"
-	"strings"
+	"os"
 )
 
 func ProxyHandler(connClient net.Conn) {
 	defer connClient.Close()
 
-	buffer := make([]byte, 65535)
-	total, err := connClient.Read(buffer)
+	cert, err := tls.LoadX509KeyPair("../certs/proxy.crt", "../certs/proxy.key")
 
 	if err != nil {
-		fmt.Println("Client-Proxy lost connection!")
+		fmt.Println("TLS error (load key pair):", err)
 		return
 	}
 
-	request := buffer[:total]
-	str_request := string(request)
-	var formatedRequest string
-
-	if strings.Contains(str_request, "/download") {
-		formatedRequest = strings.Replace(str_request, "/download", "/proxy/download", 1)
-	} else if strings.Contains(str_request, "/upload") {
-		formatedRequest = strings.Replace(str_request, "/upload", "/proxy/upload", 1)
-	} else {
-		formatedRequest = strings.Replace(str_request, "/", "/proxy", 1)
-	}
-
-	connServer, err := net.Dial(NETWORK, ADDR_SERVER)
+	ca, err := os.ReadFile("../certs/ca.crt")
 
 	if err != nil {
-		ErrorHttpHandler(connClient, NOT_FOUND_STATUS)
+		fmt.Println("TLS error (load authorities certificate ):", err)
+		return
 	}
 
-	_, erro := connServer.Write([]byte(formatedRequest))
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(ca)
+
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      pool,
+	}
+
+	buffer := make([]byte, MAX_FILE_SIZE)
+	n, err := connClient.Read(buffer)
+
+	if err != nil {
+		fmt.Println("Error to read buffer:", err)
+		ErrorHttpHandler(connClient, NOT_FOUND_STATUS)
+		return
+	}
+
+	request := buffer[:n]
+
+	connServerTls, err := tls.Dial(NETWORK, ADDR_SERVER, tlsConf)
+
+	if err != nil {
+		fmt.Println("Error to create tls.dial conn:", err)
+		ErrorHttpHandler(connClient, NOT_FOUND_STATUS)
+		return
+	}
+
+	defer connServerTls.Close()
+
+	fmt.Println(string(request))
+
+	_, erro := connServerTls.Write(request)
 
 	if erro != nil {
 		fmt.Println("Error to write request from proxy to server:", erro)
+		return
 	}
-	defer connServer.Close()
 
-	io.Copy(connClient, connServer)
+	go io.Copy(connClient, connServerTls)
 
+	io.Copy(connServerTls, connClient)
 }

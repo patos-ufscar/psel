@@ -31,14 +31,14 @@ func ConnectionHandler(conn net.Conn) {
 
 func getHandler(conn net.Conn, action string, filename string) {
 	switch action {
-	case "/proxy":
-		RenderPage(conn, HOMEPAGE, false, "")
+	case "/upload":
+		//RenderPage(conn, HOMEPAGE, false, "")
 
-	case "/proxy/download":
+	case "/download":
 		filepath := DOWNLOAD_DIRECTORY + "/" + filename
 		RenderPage(conn, filepath, true, filename)
 
-		//default:
-		//RenderPage(conn, HOMEPAGE, false, "")
+	default:
+		RenderPage(conn, HOMEPAGE, false, "")
 	}
 }
