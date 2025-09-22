@@ -11,7 +11,7 @@ func ConnectionHandler(conn net.Conn) {
 	method, action, filename, err := RequestInfos(conn)
 
 	if err != nil {
-		fmt.Println("Proxy-Server lost connection!")
+		fmt.Println("Request erro:", err)
 		return
 	}
 
@@ -19,26 +19,25 @@ func ConnectionHandler(conn net.Conn) {
 	case "GET":
 		getHandler(conn, action, filename)
 
-	case "POST":
-		/* a ideia era fazer um POST de arquivos,
-		   porem não estava muito afim de ficar
-		   manipulando eles. O default do é GET mesmo*/
 	default:
-		getHandler(conn, action, filename)
+		ErrorHttpHandler(conn, METHOD_NOT_ALLOWED_STATUS)
 	}
 
 }
 
+// Lida com a action passada no request 
+// Caso seja /download, ele retorna o arquivo pedido para download
 func getHandler(conn net.Conn, action string, filename string) {
 	switch action {
-	case "/upload":
-		//RenderPage(conn, HOMEPAGE, false, "")
 
 	case "/download":
 		filepath := DOWNLOAD_DIRECTORY + "/" + filename
 		RenderPage(conn, filepath, true, filename)
 
-	default:
+	case "/":
 		RenderPage(conn, HOMEPAGE, false, "")
+
+	default:
+		ErrorHttpHandler(conn, NOT_FOUND_STATUS)
 	}
 }

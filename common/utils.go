@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Coleta as informações relevantes que estão na requisição
 func RequestInfos(conn net.Conn) (string, string, string, error) {
 	reader := bufio.NewReader(conn)
 	requestLines, err := reader.ReadString('\n')
@@ -33,15 +34,6 @@ func RequestInfos(conn net.Conn) (string, string, string, error) {
 	}
 
 	action := requestLine[0]
-
-	if method != "GET" && method != "POST" {
-		ErrorHttpHandler(conn, METHOD_NOT_ALLOWED_STATUS)
-	}
-
-	if action != "/download" && action != "/" && action != "/upload" {
-		ErrorHttpHandler(conn, NOT_FOUND_STATUS)
-	}
-
 	filename := ""
 
 	if len(requestLine) > 1 {
@@ -51,6 +43,8 @@ func RequestInfos(conn net.Conn) (string, string, string, error) {
 	return method, action, filename, nil
 }
 
+// Formata a header da resposta, de acordo com a requisição
+// Tem duas opções: caso seja apenas um GET /, ou request para download de um file
 func formatHeader(filepath string, file *os.File, status string, todownload bool, filename string, size int) string {
 	filetype := GetFileType(filepath)
 	stat, _ := file.Stat()
@@ -72,6 +66,7 @@ func formatHeader(filepath string, file *os.File, status string, todownload bool
 	return res
 }
 
+// Dado um arquivo, ela retorna o tipo equivalente para ser informado na header da response
 func GetFileType(file string) string {
 	ext := path.Ext(file)
 	var filetype string
@@ -93,6 +88,7 @@ func GetFileType(file string) string {
 	return filetype
 }
 
+// Constroi a resposta, header + body, de acondo com a requisição e manda para conexão
 func RenderPage(conn net.Conn, filepath string, todownload bool, filename string) {
 	file, err := os.Open(filepath)
 
@@ -125,6 +121,7 @@ func RenderPage(conn net.Conn, filepath string, todownload bool, filename string
 	}
 }
 
+// Busca e retorna todos os arquivo que estão disponiveis para download na pasta "../files/downloads"
 func getFilesToDownload() ([]string, error) {
 	files, err := os.ReadDir(DOWNLOAD_DIRECTORY)
 
@@ -143,6 +140,7 @@ func getFilesToDownload() ([]string, error) {
 	return allFiles, nil
 }
 
+// Adiciona, no corpo da resposta, os arquivos disponiveis para downloads
 func renderFilesToDownload() (string, int) {
 	files, _ := getFilesToDownload()
 	html := ""
@@ -164,6 +162,7 @@ func renderFilesToDownload() (string, int) {
 	return html, len(html)
 }
 
+// Retorna uma página baseada no status error http para a conexão
 func ErrorHttpHandler(conn net.Conn, status string) {
 	var body string
 

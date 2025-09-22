@@ -12,6 +12,7 @@ import (
 func ProxyHandler(connClient net.Conn) {
 	defer connClient.Close()
 
+	// Carrega o par de chaves e o certificado da CA
 	cert, err := tls.LoadX509KeyPair("../certs/proxy.crt", "../certs/proxy.key")
 
 	if err != nil {
@@ -26,25 +27,17 @@ func ProxyHandler(connClient net.Conn) {
 		return
 	}
 
+	// Cria um conjunto de CAs confiáveis para validar o certificado do servidor
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(ca)
 
+	// Configura a conexão TLS
 	tlsConf := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		RootCAs:      pool,
+		Certificates: []tls.Certificate{cert}, // Certificação que ela vai apresentar
+		RootCAs:      pool,                    // CA que ela vai confiar
 	}
 
-	buffer := make([]byte, MAX_FILE_SIZE)
-	n, err := connClient.Read(buffer)
-
-	if err != nil {
-		fmt.Println("Error to read buffer:", err)
-		ErrorHttpHandler(connClient, NOT_FOUND_STATUS)
-		return
-	}
-
-	request := buffer[:n]
-
+	// Cria uma conn TLS com o server
 	connServerTls, err := tls.Dial(NETWORK, ADDR_SERVER, tlsConf)
 
 	if err != nil {
@@ -55,16 +48,10 @@ func ProxyHandler(connClient net.Conn) {
 
 	defer connServerTls.Close()
 
-	fmt.Println(string(request))
+	// Goroutine para enviar os request do client para o server
+	go io.Copy(connServerTls, connClient)
 
-	_, erro := connServerTls.Write(request)
+	// Manda a resposta do sever para o client
+	io.Copy(connClient, connServerTls)
 
-	if erro != nil {
-		fmt.Println("Error to write request from proxy to server:", erro)
-		return
-	}
-
-	go io.Copy(connClient, connServerTls)
-
-	io.Copy(connServerTls, connClient)
 }

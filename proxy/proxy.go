@@ -7,12 +7,14 @@ import (
 	"github.com/oeduardopereira/psel/common"
 )
 
-func main() {
 
+func main() {
+	
+	// Cria uma conexão na porta localhost:8080
 	listener, err := net.Listen(common.NETWORK, common.ADDR_PROXY)
 
 	if err != nil {
-		fmt.Println("Error to proxy liste:", err)
+		fmt.Println("Error to proxy listening:", err)
 		return
 	}
 
