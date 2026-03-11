@@ -1,81 +1,60 @@
-# PATOS PSEL
+# Servidor HTTP / Servidor de pastas em C++ - PATOS PSEL
 
-Tá sempre aberto, só enviar o PR
+## Sobre
 
----
+Este projeto foi desenvolvido para o processo seletivo do PATOS. O objetivo foi criar um Servidor de pastas / Reverse Proxy para processar pedidos HTTP de forma nativa via navegador, utilizando a API de **Berkeley Sockets**.
 
-Dê um fork neste repositório e desenvolva nele. Quando estiver pronto, abra um PR.
+O projeto foi feito em **C++** com uso de bibliotecas padrão (como `std::string`, `std::vector` e `std::map`) para a manipulação de dados e parsing de texto.
 
-Deve ser desenvolvido um `Reverse Proxy/Servidor de Arquivos` (a partir de `Berkley Sockets`) em sua linguagem de preferência, de qualquer forma, é preciso conseguir acessá-la de um navegador (HTTP).
+## Funcionalidades e Requisitos
 
-[**sem lib dmais** -> PRECISA fazer o parsing do HTTP na mão].
-Não é pra fazer assim:
+### Essenciais
+- **HTTP Compliant:** O servidor pode ser acessado a partir de qualquer navegador web padrão (Chrome, Edge, Firefox)
+- **Parsing Manual:** Todo o processamento do protocolo HTTP (métodos, cabeçalhos, corpo) foi desenvolvido manualmente a partir dos buffers recebidos pelo socket
+- **Servidor de Pastas Estáticos:** Mapeamento de rotas da URL para a leitura de pastas no sistema (HTML, CSS, JS)
 
-```py
-from thingdoer import ThingDoer
+### Extras
+- **Multi-threading (Workers):** Utilização da biblioteca `<thread>` para lidar com múltiplas conexões em simultâneo. O servidor não bloqueia à espera de finalizar o envio de uma pasta para atender um novo cliente
+- **Tratamento de Segurança Mínimo (Directory Traversal):** Implementação de uma camada de segurança simples que impede atacantes de utilizarem `../` na URL para acessar aas pastas confidenciais fora do *Document Root* (`/www`).
+- **Tratamento de Erros:** O servidor devolve *Status Codes* HTTP como `200 OK` para pastas encontradas, `404 Not Found` para recursos inexistentes e `403 Forbidden` para tentativas de acesso indevido
 
-ThingDoer.do_thing()
-```
+## Arquitetura e Estrutura de Pastas
 
-Linguagens:
+O projeto foi refatorado e dividido em pastas para manter a organização do código:
 
-- C/C++
-- ASM
-- Go
-- Rust
-- Zig
-- Clojure
-- Erlang
-- Qualquer outra desde que não tenha muita coisa pronta (ou seja, não para python ou JS)
+- `src/main.cpp`: Ponto de entrada da aplicação, instancia e inicia o servidor
+- `src/ServerSocket.cpp / .h`: Encapsula a API do sistema operacional (`getaddrinfo`, `socket`, `bind`, `listen`, `accept`)
+- `src/HttpRequest.cpp / .h`: Estrutura de dados e lógica de parsing para transformar o texto bruto do socket num objeto manipulável
+- `src/HttpResponse.cpp / .h`: Estrutura que formata os dados (código de estado, headers, body) numa string HTTP compliant
+- `src/FileHandler.cpp / .h`: Cuida do *Document Root* (a pasta `/www`), faz a leitura das pastas e atribui as extensões corretas
 
-(Nossa recomendação é algo tipo C++11 / Go, é bem parecido com C, mas deixa mais facil pq tem string, vector, map etc)
+## Como Compilar e Executar
 
-Lembrando que o objetivo não é ser algo extremamtente complexo, a ideia principal é integrar
-direto com o S.O., ou seja, NÃO utilizar libs que abstraiam demais as interações. Queremos
-saber o que vocês acharam difícil, como resolveram, onde acharam que poderiam ter ido mais
-a fundo, etc. Quanto mais coisas "prontas" vocês utilizarem, menos coisa teremos para te avaliar, lembre-se disso.
+1. **Clone o repositório:**
+   ```bash
+   git clone <esse fork>
+   cd psel-patos/src
+    ```
 
-As entregas serão individuais, mas sintam-se à vontade para trabalhar/discutir em grupo.
+2. **Compile o projeto:**
+    O projeto requer o standard C++11 (ou superior) e a biblioteca pthread para o suporte a multi-threading
+     ```bash
+    g++ -std=c++11 *.cpp -o server -pthread
+     ```
 
-**O Código deve ser entregue por um repositório no GitHub, lembre-se de adicionar um README.md**
+3. **Inicie o servidor:**
+     ```bash
+    ./server
+     ```
 
-No final, haverá uma entrevista individual.
 
-Pontos de Avaliação Essenciais:
+## Dificuldades e Decisões de Desenvolvimento
 
-- **HTTP compliant (conseguir acessar pelo navegador)**
-- **Documentação**
-- **Colaboração (documentar fontes de informação/código, informar sua jornada)**
-- **Organização e Versionamento de Código**
-- **Experiência num Geral, não apenas código**
+1. Bloqueio de I/O: Inicialmente eu fiz o servidor atendendo um cliente de cada vez. Adicionei a `std::thread` para que a simulação de conexões simultâneas funcionasse (quando uma página HTML solicita também a pasta CSS e uma pasta de imagem ao mesmo tempo, por exemplo).
 
-Pontos de Avaliação Extras (faça oq conseguir/quiser, são apenas pontos para vocês se interessarem,
-não precisam ser explorados):
+2. Entender o problema: Tive certa dificuldade inicial de entender o conceito de reverse proxy, isso tornou um pouco complexo ao pensar no que fazer e em como fazer.
 
-- testes
-- host validation
-- max connections
-- num workers
-- tratamento de erros
-- memory safety
-- deploy (compilação, empacotamento)
-- telemetria/SRE
-
-Recursos extras:
-
-- https://www.youtube.com/watch?v=iuwSYRdxKjQ
+## Fontes de busca
+- https://github.com/rhymu8354/SocketTutorial/tree/main
+- https://www.dei.isep.ipp.pt/~asc/doc/sockets-berkeley.html (explicação MUITO boa)
 - https://beej.us/guide/bgnet/html/split/
-- https://github.com/mr21/strsplit.c
-- https://developer.mozilla.org/en-US/docs/Web/HTTP
-- https://en.wikipedia.org/wiki/HTTP
-- https://documentation.help/DogeTool-HTTP-Requests-vt/http_request.htm (ta zuado, mas as fts são boas)
-
-Obs:
-
-- Sinta-se à vontade para nos contactar a qualquer momento sobre qualquer dúvida, adoraremos ajudar!
-- Se tiver uma dúvida geral, ou queira deixar sua dúvida pública utilize a área de [Issues](https://github.com/patos-ufscar/psel/issues)
-- Não se sinta pressionado em fazer tudo, foque no que se sente confortável
-- Envie mesmo se não conseguir terminar as partes essenciais, documente suas dificuldades
-- Escreva um arquivo de texto/Markdown que descreva seu processo
-
-> Lembrando que o processo é pra ser bem de boa, queremos ver até onde conseguem ir/se empurram, sem preocupação em fazer todos os essenciais.
