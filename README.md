@@ -313,3 +313,112 @@ Abaixo disponibilizamos alguns links para sites que podem ser úteis para o anda
 - Como funciona um load balancer: https://aws.amazon.com/what-is/load-balancing/
 
 - Como funciona um servidor HTTP básico: https://medium.com/@gabriellamedas/the-http-server-explained-c41380307917
+
+---
+
+# rs-proxy
+
+A simple HTTP reverse proxy server written in Rust.
+
+## Description
+
+This project implements a basic reverse proxy that forwards HTTP requests to an upstream server. It consists of two crates: a proxy server and an origin server for testing purposes.
+
+## Features
+
+- HTTP request forwarding
+- Header rewriting (Host header, X-Forwarded-For)
+- Request logging with tracing
+- Error handling with appropriate HTTP status codes
+- Async/await implementation using Tokio
+- Connection pooling infrastructure (in development)``
+
+## Usage
+
+The project is a Cargo workspace with two crates: `proxy` and `server`.
+
+### Running the Origin Server
+
+Start the upstream server first:
+
+```bash
+cargo run -p server
+```
+
+This starts the origin server on `0.0.0.0:8081`.
+
+### Running the Proxy
+
+In a separate terminal, start the proxy:
+
+```bash
+cargo run -p proxy
+```
+
+This starts the reverse proxy on `0.0.0.0:8080`, which forwards requests to `localhost:8081`.
+
+## Architecture
+
+### Proxy Crate
+
+The proxy server listens for incoming HTTP requests on port 8080, performs the following operations:
+
+1. **Logging**: Logs the request method, URI, and headers
+2. **Header Rewriting**: 
+   - Sets the Host header to the upstream server address
+   - Adds X-Forwarded-For header with client IP
+3. **Forwarding**: Establishes a connection to the upstream server and forwards the request
+
+### Server Crate
+
+A simple origin server that:
+
+- Listens on port 8081
+- Responds to requests with "origin server response"
+- Logs request details (method, URI, headers) to stdout
+- Returns 404 for unmatched routes
+
+### Data Flow
+
+```
+Client Request
+    ↓
+Proxy Server (8080)
+    ├─ Log request
+    ├─ Rewrite headers
+    └─ Forward to upstream
+    ↓
+Origin Server (8081)
+    ├─ Process request
+    └─ Return response
+    ↓
+Proxy returns response to client
+```
+
+## Testing
+
+Test the proxy setup by making a request:
+
+```bash
+curl http://localhost:8080/
+```
+
+You should receive "origin server response" and see detailed logs in both server terminals.
+
+## Development
+
+### Building Individual Crates
+
+```bash
+# Build proxy only
+cargo build -p proxy
+
+# Build server only
+cargo build -p server
+```
+
+### Running Tests
+
+```bash
+cargo test
+```
