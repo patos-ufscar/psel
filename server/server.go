@@ -5,19 +5,19 @@ import (
 	"io"
 )
 
-type server struct {
+type Server struct {
 	connections int
 	host string
 }
 
-func New(host string) *server {
-	return &server{
+func New(host string) *Server {
+	return &Server{
 		host: host,
 		connections: 0,
 	}
 }
 
-func (s *server) Request(content []byte) (response []byte, err error) {
+func (s *Server) Request(content []byte) (response []byte, err error) {
 	conn, err := net.Dial("tcp", s.host)
 
 	if err != nil {
