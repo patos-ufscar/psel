@@ -17,7 +17,7 @@ func New(host string) *Server {
 	}
 }
 
-func (s *Server) Request(content []byte) (response []byte, err error) {
+func (s *Server) Send(content []byte) (response []byte, err error) {
 	conn, err := net.Dial("tcp", s.host)
 
 	if err != nil {
