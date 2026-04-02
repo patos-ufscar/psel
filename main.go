@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"loadbal/proxy"
 	"net"
+	"loadbal/proxy"
+	"loadbal/balancer"
 )
 
 func main() {
+	bal := balancer.New([]string{"localhost:8001"})
 	listener, err := net.Listen("tcp", "localhost:8000")
 
 	if err != nil {
@@ -23,7 +25,7 @@ func main() {
 
 		fmt.Println("New client connected:", clientConn.RemoteAddr().String())
 
-		bestServerHost := "localhost:8001" // hardcoded for now
+		bestServerHost := bal.Pick(balancer.Strategies.Static)
 
 		if err != nil {
 			fmt.Println("Failed to connect to new server:", err)

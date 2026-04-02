@@ -55,7 +55,7 @@ func (p *Proxy) copyStream(in, out net.Conn) {
 			break
 		}
 
-		// TODO: properly handle this
+		// TODO: properly handle this too
 		out.Write(buf[:n])
 	}
 }
