@@ -65,22 +65,22 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +14 main.go
-badd +1 go.mod
-badd +20 server/server.go
+badd +1 ~/Documents/bcc/patos/load-balancer
+badd +1 main.go
 argglobal
 %argdel
+$argadd ~/Documents/bcc/patos/load-balancer
 edit NetrwTreeListing
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
 wincmd _ | wincmd |
+split
+1wincmd k
+wincmd _ | wincmd |
 vsplit
 1wincmd h
 wincmd w
-wincmd _ | wincmd |
-split
-1wincmd k
 wincmd w
 let &splitbelow = s:save_splitbelow
 let &splitright = s:save_splitright
@@ -91,11 +91,11 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 37 + 74) / 149)
-exe '2resize ' . ((&lines * 17 + 19) / 38)
-exe 'vert 2resize ' . ((&columns * 111 + 74) / 149)
-exe '3resize ' . ((&lines * 18 + 19) / 38)
-exe 'vert 3resize ' . ((&columns * 111 + 74) / 149)
+exe '1resize ' . ((&lines * 27 + 19) / 38)
+exe 'vert 1resize ' . ((&columns * 26 + 74) / 149)
+exe '2resize ' . ((&lines * 27 + 19) / 38)
+exe 'vert 2resize ' . ((&columns * 122 + 74) / 149)
+exe '3resize ' . ((&lines * 8 + 19) / 38)
 argglobal
 balt main.go
 let s:cpo_save=&cpo
@@ -260,17 +260,16 @@ setlocal nowrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 5 - ((4 * winheight(0) + 18) / 36)
+let s:l = 1 - ((0 * winheight(0) + 13) / 27)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 5
+keepjumps 1
 normal! 0
 lcd ~/Documents/bcc/patos/load-balancer
 wincmd w
 argglobal
-if bufexists(fnamemodify("~/Documents/bcc/patos/load-balancer/server/server.go", ":p")) | buffer ~/Documents/bcc/patos/load-balancer/server/server.go | else | edit ~/Documents/bcc/patos/load-balancer/server/server.go | endif
-balt ~/Documents/bcc/patos/load-balancer/main.go
+if bufexists(fnamemodify("~/Documents/bcc/patos/load-balancer/main.go", ":p")) | buffer ~/Documents/bcc/patos/load-balancer/main.go | else | edit ~/Documents/bcc/patos/load-balancer/main.go | endif
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
@@ -410,17 +409,18 @@ setlocal nowrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 36 - ((10 * winheight(0) + 8) / 17)
+let s:l = 1 - ((0 * winheight(0) + 13) / 27)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 36
-normal! 046|
+keepjumps 1
+normal! 0
+lcd ~/Documents/bcc/patos/load-balancer
 wincmd w
 argglobal
-terminal ++curwin ++cols=111 ++rows=18 
-let s:term_buf_10 = bufnr()
-balt ~/Documents/bcc/patos/load-balancer/server/server.go
+terminal ++curwin ++cols=149 ++rows=8 
+let s:term_buf_4 = bufnr()
+balt ~/Documents/bcc/patos/load-balancer/main.go
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
@@ -558,19 +558,19 @@ setlocal nowinfixwidth
 set nowrap
 setlocal nowrap
 setlocal wrapmargin=0
-let s:l = 1 - ((0 * winheight(0) + 9) / 18)
+let s:l = 1 - ((0 * winheight(0) + 4) / 8)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
 keepjumps 1
 normal! 0
+lcd ~/Documents/bcc/patos/load-balancer
 wincmd w
-3wincmd w
-exe 'vert 1resize ' . ((&columns * 37 + 74) / 149)
-exe '2resize ' . ((&lines * 17 + 19) / 38)
-exe 'vert 2resize ' . ((&columns * 111 + 74) / 149)
-exe '3resize ' . ((&lines * 18 + 19) / 38)
-exe 'vert 3resize ' . ((&columns * 111 + 74) / 149)
+exe '1resize ' . ((&lines * 27 + 19) / 38)
+exe 'vert 1resize ' . ((&columns * 26 + 74) / 149)
+exe '2resize ' . ((&lines * 27 + 19) / 38)
+exe 'vert 2resize ' . ((&columns * 122 + 74) / 149)
+exe '3resize ' . ((&lines * 8 + 19) / 38)
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0
   silent exe 'bwipe ' . s:wipebuf
