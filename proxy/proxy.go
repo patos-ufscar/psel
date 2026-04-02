@@ -9,7 +9,7 @@ import (
 type Proxy struct {
 	clientConn net.Conn
 	serverConn net.Conn
-	open bool
+	Open bool
 }
 
 // I don't really enjoy constructors that yeld and may throw errors,
@@ -27,7 +27,7 @@ func New(clientConn net.Conn, serverHost string) (*Proxy, error) {
 	proxy := &Proxy{
 		clientConn: clientConn,
 		serverConn: serverConn,
-		open: true,
+		Open: true,
 	}
 
 	// io.Copy can (and will) be used here, but first I want
@@ -41,7 +41,7 @@ func New(clientConn net.Conn, serverHost string) (*Proxy, error) {
 func (p *Proxy) copyStream(in, out net.Conn) {
 	buf := make([]byte, 1024)
 
-	for {
+	for p.Open {
 		n, err := in.Read(buf)
 
 		if err == io.EOF {
@@ -50,8 +50,7 @@ func (p *Proxy) copyStream(in, out net.Conn) {
 		}
 
 		if err != nil {
-			// TODO: properly handle this
-			fmt.Println("Failed to read client data:", err)
+			// Connection most likely closed
 			break
 		}
 
@@ -63,5 +62,5 @@ func (p *Proxy) copyStream(in, out net.Conn) {
 func (p *Proxy) Close() {
 	p.clientConn.Close()
 	p.serverConn.Close()
-	p.open = false
+	p.Open = false
 }
