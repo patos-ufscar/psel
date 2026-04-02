@@ -36,20 +36,6 @@ func (s *Server) Send(content []byte) (response []byte, err error) {
 	s.connections++
 	defer func() { s.connections-- }()
 
-	for {
-		buf := make([]byte, 4096)
-		n, err := conn.Read(buf)
-
-		if n == 0 || err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return response, err
-		}
-
-		response = append(response, buf[:n]...)
-	}
 
 	return
 }

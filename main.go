@@ -1,15 +1,22 @@
 package main
 
-import "fmt"
-import "loadbal/server"
+import (
+	"fmt"
+	"loadbal/server"
+	"loadbal/balancer"
+)
 
 func main() {
-	s := server.New("localhost:8080")
-	response, err := s.Request([]byte("content delivery"))
+	servers := []*server.Server{
+		server.New("localhost:8001"),
+	}
+
+	balancer, err := balancer.New("localhost:8000", servers)
 
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%q", response)
+	balancer.Start()
+	fmt.Println("Started")
 }
