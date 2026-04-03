@@ -2,35 +2,36 @@ package balancer
 
 import (
 	"fmt"
-	"net"
 	"loadbal/proxy"
+	"net"
 )
 
 type Balancer struct {
-	Host string
-	Servers []string
-	Connections []int  // connections[n] is the amount of connections of servers[n]
-	Strategy Strategy
+	Host        string
+	Servers     []string
+	Connections []int // connections[n] is the amount of connections of servers[n]
+	Strategy    Strategy
 }
 
 func New(host string, servers []string, strategy Strategy) *Balancer {
 	return &Balancer{
-		Host: host,
-		Servers: servers,
+		Host:        host,
+		Servers:     servers,
 		Connections: make([]int, len(servers)),
-		Strategy: strategy,
+		Strategy:    strategy,
 	}
 }
 
-func (b *Balancer) Pick(s Strategy) string {
-	server := s(b)
-	fmt.Printf("Picked server [%q]\n", server)
+func (b *Balancer) PickServer() int {
+	server := b.Strategy(b)
+	fmt.Printf("Picked server %q\n", b.Servers[server])
 
 	return server
 }
 
 func (b *Balancer) Start() error {
 	listener, err := net.Listen("tcp", b.Host)
+	defer listener.Close()
 
 	if err != nil {
 		return err
@@ -46,7 +47,8 @@ func (b *Balancer) Start() error {
 
 		fmt.Println("New client connected:", clientConn.RemoteAddr().String())
 
-		bestServerHost := b.Pick(b.Strategy)
+		serverIndex := b.PickServer()
+		serverHostname := b.Servers[serverIndex]
 
 		if err != nil {
 			fmt.Println("Failed to connect to new server:", err)
@@ -54,6 +56,13 @@ func (b *Balancer) Start() error {
 			continue
 		}
 
-		go proxy.New(clientConn, bestServerHost)
+		onClose := func() {
+			b.Connections[serverIndex]--
+		}
+
+		proxy := proxy.New(clientConn, serverHostname, &onClose)
+		go proxy.Start()
+
+		b.Connections[serverIndex]++
 	}
 }

@@ -4,20 +4,37 @@ import (
 	"math/rand"
 )
 
-type Strategy func(balancer *Balancer) string
+type Strategy func(balancer *Balancer) int
 
-func static(b *Balancer) string {
-	return b.Servers[0]
+func static(b *Balancer) int {
+	return 0
 }
 
-func random(b *Balancer) string {
-	return b.Servers[rand.Intn(len(b.Servers))]
+func random(b *Balancer) int {
+	return rand.Intn(len(b.Servers))
+}
+
+func leastConnections(b *Balancer) int {
+	// Hopefully O(n) won't be a problem
+	leastIndex := 0
+	least := b.Connections[leastIndex]
+
+	for i, connections := range b.Connections {
+		if connections < least {
+			least = connections
+			leastIndex = i
+		}
+	}
+
+	return leastIndex
 }
 
 var Strategies = struct {
 	Static Strategy
 	Random Strategy
+	LeastConnections Strategy
 } {
 	Static: static,
 	Random: random,
+	LeastConnections: leastConnections,
 }

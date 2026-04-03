@@ -1,41 +1,46 @@
 package proxy
 
 import (
-	"net"
-	"io"
 	"fmt"
+	"io"
+	"net"
 )
 
 type Proxy struct {
 	clientConn net.Conn
-	serverConn net.Conn
-	Open bool
+	serverConn *net.Conn
+	serverHost string
+	Open       bool
+	onClose    *func()
 }
 
-// I don't really enjoy constructors that yeld and may throw errors,
-// but it's the way I found to avoid checking whether serverConn
-// exists. I'll likely rewrite this in the future.
-func New(clientConn net.Conn, serverHost string) (*Proxy, error) {
-	serverConn, err := net.Dial("tcp", serverHost)
+func New(clientConn net.Conn, serverHost string, onClose *func()) *Proxy {
+	return &Proxy{
+		Open:       false,
+		clientConn: clientConn,
+		serverHost: serverHost,
+		onClose:    onClose,
+	}
+}
+
+func (p *Proxy) Start() error {
+	serverConn, err := net.Dial("tcp", p.serverHost)
+	p.serverConn = &serverConn
 
 	if err != nil {
 		fmt.Println("Failed to connect to server:", err)
-		clientConn.Close()
-		return nil, err
+		p.clientConn.Close()
+		return err
 	}
 
-	proxy := &Proxy{
-		clientConn: clientConn,
-		serverConn: serverConn,
-		Open: true,
-	}
+	p.Open = true
 
 	// io.Copy can (and will) be used here, but first I want
 	// to implement a simple version by hand
-	go proxy.copyStream(clientConn, serverConn)
-	go proxy.copyStream(serverConn, clientConn)
+	go p.copyStream(p.clientConn, serverConn)
+	go p.copyStream(serverConn, p.clientConn)
 
-	return proxy, nil
+	return nil
 }
 
 func (p *Proxy) copyStream(in, out net.Conn) {
@@ -61,6 +66,10 @@ func (p *Proxy) copyStream(in, out net.Conn) {
 
 func (p *Proxy) Close() {
 	p.clientConn.Close()
-	p.serverConn.Close()
+	(*p.serverConn).Close()
 	p.Open = false
+
+	if p.onClose != nil {
+		(*p.onClose)()
+	}
 }
