@@ -1,0 +1,8 @@
+{
+	"port": 8000,
+	"strategy": "LeastConnections",
+	"servers": [
+		"localhost:8001",
+		"httpforever.com:80"
+	]
+}

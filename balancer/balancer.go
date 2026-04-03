@@ -37,6 +37,8 @@ func (b *Balancer) Start() error {
 		return err
 	}
 
+	fmt.Printf("Load Balancer listening - %q\n", b.Host)
+
 	for {
 		clientConn, err := listener.Accept()
 

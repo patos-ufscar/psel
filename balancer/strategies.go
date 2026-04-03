@@ -29,12 +29,8 @@ func leastConnections(b *Balancer) int {
 	return leastIndex
 }
 
-var Strategies = struct {
-	Static Strategy
-	Random Strategy
-	LeastConnections Strategy
-} {
-	Static: static,
-	Random: random,
-	LeastConnections: leastConnections,
+var Strategies = map[string]Strategy {
+	"Static": static,
+	"Random": random,
+	"LeastConnections": leastConnections,
 }
