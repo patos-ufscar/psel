@@ -1,16 +1,16 @@
 package main
 
 import (
-	"loadbal/balancer"
 	"encoding/json"
-	"os"
 	"fmt"
+	"loadbal/balancer"
+	"os"
 )
 
 type Config struct {
-	Port int `json:port`
-	Strategy string `json:strategy`
-	Servers []string `json:servers`
+	Port     int      `json:port`
+	Strategy string   `json:strategy`
+	Servers  []string `json:servers`
 }
 
 func main() {
