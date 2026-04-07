@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Introdução
 Este é o processo seletivo para ingresso no grupo PATOS. Optei por fazer o load balancer em Go para conhecer melhor a linguagem e por conta da concorrência (goroutines). Apesar de ter ficado simples, foi um projeto bem legal de se fazer e aprendi um pouco sobre Go.
 ## Instalação
