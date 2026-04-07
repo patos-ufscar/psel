@@ -79,9 +79,9 @@ Assim, a ideia é criar duas streams TCP concorrentes, uma para o servidor e out
 - A latência possivelmente será menor, visto que as duas sockets são sincronizadas quase que em tempo real.
 -  Considerando o fato de ser uma sincronização TCP, funcionaria para todos os protocolos que utilizam TCP, não apenas para HTTP. O servidor tem total liberdade e flexibilidade para decidir como lidar com essas requisições, da mesma forma que ocorre se não houver um intermediador.
 
-Desvantagems:
+Desvantagens:
 - Filtros na comunicação ficam muito mais complicados, já que a proxy não terá a requisição completa antes de já ter roteado boa parte do pacote.
-- Lidar com erros de envio de segmentos fica mais complicado e requer uma implementação mais cuidadosa (que possivelmente não farei no primeiro momento), uma vez que, pela natureza do TCP, os segmentos que chegam à proxy já são frações do conteúdo integral e podem ser ainda mais fracionados em multiplos segmentos durante o roteamento ao peer seguinte. Portanto, é preciso garantir que todos os segmentos chegaram ao peer, ou enviar novamente os que encontraram erros. Acredito que a biblioteca `net` do Go já lide com isso e eu não preciso me preocupar, mas devo conferir essa informação.
+- Lidar com erros de envio de segmentos fica mais complicado e requer uma implementação mais cuidadosa (que possivelmente não farei no primeiro momento), uma vez que, pela natureza do TCP, os segmentos que chegam à proxy já são frações do conteúdo integral e podem ser ainda mais fracionados em múltiplos segmentos durante o roteamento ao peer seguinte. Portanto, é preciso garantir que todos os segmentos chegaram ao peer, ou enviar novamente os que encontraram erros. Acredito que a biblioteca `net` do Go já lide com isso e eu não preciso me preocupar, mas devo conferir essa informação.
 
 > Vou começar a implementar e trago atualizações.
 
@@ -93,10 +93,10 @@ Desvantagems:
 ## 03/04
 Adicionei métodos básicos de balanceamento. Agora, para finalizar a primeira versão do projeto, faltam o arquivo de configuração e logs mais eficientes.
 # Conclusões finais
-O load balancer é HTTP compliant. Na realidade, é compliant com qualquer protocolo que utilize TCP. No entanto, não é possível acessar um host com HTTPS, visto que o acordo para chaves TLS funciona. Uma possibilidade pode ser intermediar inclusive a troca de chaves durante o TLS handshake, mas, ainda assim, o cliente não teria o certificado do servidor, apenas o da proxy, fazendo com que não seja possível confiar e estabelecer a conexão.
+O load balancer é HTTP compliant. Na realidade, é compliant com qualquer protocolo que utilize TCP. No entanto, não é possível acessar um host com HTTPS, visto que o acordo para chaves TLS não funciona. Uma possibilidade pode ser intermediar inclusive a troca de chaves durante o TLS handshake, mas, ainda assim, o cliente não teria o certificado do servidor, apenas o da proxy, fazendo com que não seja possível confiar e estabelecer a conexão.
 
 Assim, como querermos manter o endereço dos servidores em segredo, a melhor solução que me vem a mente é utilizar HTTPS tanto na conexão cliente-balancer quanto na balancer-server.
 
-É importante notar que, dessa forma, a requisição estará completamente descriptografada para o load balancer, o que pode ser uma preocupação de privacidade a depender do modo como o sistema foi estruturado.
+É importante notar que, dessa forma, a requisição estará completamente descriptografada para o load balancer, o que pode ser uma preocupação de privacidade, a depender do modo como o sistema foi estruturado.
 
-Visto que esse é um projeto de código aberto e quem está rodando provavelmente será a mesma pessoa que controla os servidores, a privacidade não é um problema (essa lógica pode ser generalizada para qualquer load balancer). No entanto, utilizar um load balancer (ou qualquer tipo de proxy) de terceiros pode ser preocupante caso implementem o modelo que descrevi.
+Visto que este é um projeto de código aberto e quem está rodando provavelmente será a mesma pessoa que controla os servidores, a privacidade não é um problema (essa lógica pode ser generalizada para qualquer load balancer). No entanto, utilizar um load balancer (ou qualquer tipo de proxy) de terceiros pode ser preocupante caso implementem o modelo que descrevi.
