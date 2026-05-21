@@ -36,7 +36,7 @@ int tun_alloc(char *dev) {
     struct ifreq ifr;
     int fd, err;
 
-    // Correção: Atribuindo o resultado do open ao 'fd'
+    
     if((fd = open("/dev/net/tun", O_RDWR)) < 0) {
         perror("Erro ao abrir /dev/net/tun");
         return -1;
@@ -88,7 +88,7 @@ int main() {
 
     char buffer[BUFFER_SIZE];
 
-    // Loop de processamento de pacotes
+    // loop de processamento de pacotes
     while(1) {
         int nread = read(tunfd, buffer, sizeof(buffer));
         if(nread < sizeof(struct iphdr)) {
@@ -96,7 +96,7 @@ int main() {
             continue;
         }
 
-        // Faz o cast do buffer para um cabeçalho IP
+        // faz o cast do buffer para um cabeçalho IP
         struct iphdr *ip = (struct iphdr *)buffer;
         if(ip->version != 4){
             continue;
