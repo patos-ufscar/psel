@@ -16,6 +16,7 @@ typedef struct
 {
     bool verbose;
     TypeAct act;
+    int mask;
     uint32_t ip;
 } Rule;
 

@@ -1,0 +1,11 @@
+# =====================================================================
+# CONFIGURAÇÃO DE REGRAS DO FIREWALL (conf.rc)
+# =====================================================================
+# O formato obrigatório para o código atual é:
+# [ação] [ip]         -> Sem log detalhado
+# [ação] verbose [ip] -> Com log detalhado
+# =====================================================================
+deny verbose 142.250.0.0/16
+verbose 8.8.8.8
+tarpit verbose 192.168.0.10
+allow verbose 127.0.0.1
