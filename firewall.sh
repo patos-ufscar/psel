@@ -8,7 +8,7 @@ TUN_INT="tun0"
 FAKE_IP="10.0.0.2"
 TUN_IP="10.0.0.1"
 TUN_NET="10.0.0.0/24"
-EXT_INT="enp0s3"
+EXT_INT="eth0"         # coloque aqui a interface que vc deseja passar o trafego para interface TUN
 BIN_PATH="./fwall"
 PID_FILE="/tmp/firewall.pid" 
 
@@ -17,7 +17,7 @@ start_firewall() {
 
     echo 1 > /proc/sys/net/ipv4/ip_forward
 
-    if ! ip link show $TUN_INT &>/dev/null; then
+    if ! ip link show $TUN_INT &>/dev/null; then                    # verifica se a interface TUN ja existe 
         echo "[+] Criando interface virtual $TUN_INT..."
         ip tuntap add mode tun dev $TUN_INT
     fi
@@ -25,12 +25,12 @@ start_firewall() {
     echo "[+] Configurando IP $TUN_IP na interface $TUN_INT..."
 
     ip addr add $TUN_IP/24 dev $TUN_INT 2>/dev/null
-    ip link set dev $TUN_INT up
+    ip link set dev $TUN_INT up                                    #liga a interface com o ip especificado
 
 
     echo "[+] Definindo rotas de armadilha para o Tarpit..."
 
-    ip route add $TUN_NET dev $TUN_INT proto static scope link 2>/dev/null
+    ip route add $TUN_NET dev $TUN_INT proto static scope link 2>/dev/null #  cria uma rota para a interface TUN
 
     # Redireciona o tráfego que entra na eth0 na porta 80 direto para o IP do seu firewall na tun0
     iptables -t nat -A PREROUTING -i $EXT_INT -p tcp --dport 80 -j DNAT --to-destination $FAKE_IP
