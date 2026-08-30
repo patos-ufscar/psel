@@ -15,7 +15,7 @@ PID_FILE="/tmp/firewall.pid"
 start_firewall() {
     echo "[+] Inicializando infraestrutura do Firewall..."
 
-    echo 1 > /proc/sys/net/ipv4/ip_forward
+    echo 0 > /proc/sys/net/ipv4/ip_forward
 
     if ! ip link show $TUN_INT &>/dev/null; then
         echo "[+] Criando interface virtual $TUN_INT..."
@@ -33,14 +33,14 @@ start_firewall() {
     ip route add $TUN_NET dev $TUN_INT proto static scope link 2>/dev/null
 
     # Redireciona o tráfego que entra na eth0 na porta 80 direto para o IP do seu firewall na tun0
-    iptables -t nat -A PREROUTING -i $EXT_INT -p tcp --dport 80 -j DNAT --to-destination $FAKE_IP
+    #iptables -t nat -A PREROUTING -i $EXT_INT -p tcp --dport 80 -j DNAT --to-destination $FAKE_IP
 
     echo 1 > /proc/sys/net/ipv4/conf/$TUN_INT/rp_filter
 
     echo "[✓] Ambiente pronto."
 
     echo "[+] Iniciando o binário do firewall ($BIN_PATH)..."
-    $BIN_PATH &
+    $BIN_PATH #&
     
     # Salva o número do processo (PID) no nosso arquivo temporário
     echo $! > $PID_FILE 
@@ -58,8 +58,8 @@ stop_firewall() {
         echo "[!] Processo não encontrado ou já encerrado."
     fi
 
-    echo "[-] Removendo regras de redirecionamento do iptables..."
-    iptables -t nat -D PREROUTING -i $EXT_INT -p tcp --dport 80 -j DNAT --to-destination $FAKE_IP 2>/dev/null
+    #echo "[-] Removendo regras de redirecionamento do iptables..."
+    #iptables -t nat -D PREROUTING -i $EXT_INT -p tcp --dport 80 -j DNAT --to-destination $FAKE_IP 2>/dev/null
 
     if ip link show $TUN_INT &>/dev/null; then
         echo "[-] Removendo interface virtual $TUN_INT..."

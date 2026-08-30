@@ -7,6 +7,7 @@
 #include <linux/if_tun.h>
 #include <linux/if.h>
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,10 +16,14 @@
 #include <time.h>
 #include <unistd.h>
 
-
 #define BUFFER_SIZE 2048
 
 int check_mask(int prefix, uint32_t packet_net_ip, uint32_t rule_net_ip){
+
+    if (prefix < 0 || prefix > 32){
+        return 0;
+    }
+
     uint32_t ip = ntohl(packet_net_ip);             //converte os enderecos de NBO (Network Byte Order) pra HBO (Host Byte Order)
     uint32_t netip = ntohl(rule_net_ip);
 
@@ -63,7 +68,10 @@ int tun_alloc(char *dev) {
     memset(&ifr, 0, sizeof(ifr));
     ifr.ifr_flags = IFF_TUN | IFF_NO_PI; // TUN (Camada 3) e sem informações extras de pacote
 
-    if(*dev) strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+    if(*dev){
+        strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
+        ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+    }
 
     if((err = ioctl(fd, TUNSETIFF, (void*) &ifr)) < 0) {          //syscall usando todas os regras necessarias  
         perror("Erro no ioctl (TUNSETIFF)");
@@ -75,12 +83,58 @@ int tun_alloc(char *dev) {
     return fd;
 }
 
+int check_payload(unsigned char *packet, int nread){
+    struct iphdr *iph = (struct iphdr *)packet;
+    int ip_header_len = iph->ihl * 4;
+
+    unsigned char *payload = NULL;
+    int payload_len = 0;
+
+    if (iph->protocol == IPPROTO_TCP) {
+        if(ip_header_len + (int)sizeof(struct tcphdr) > nread) return 0;
+
+        struct tcphdr *tcph = (struct tcphdr *)(packet + ip_header_len);
+        int tcp_header_len = tcph->doff *4;
+
+        if(tcp_header_len < (int)sizeof(struct tcphdr)) return 0;
+
+        payload = packet + ip_header_len + tcp_header_len;
+        payload_len = ntohs(iph->tot_len) - (ip_header_len + tcp_header_len);
+    }
+    
+    else if(iph->protocol == IPPROTO_UDP){
+        payload = packet + ip_header_len + 8;
+        payload_len = ntohs(iph->tot_len) - (ip_header_len + 8);
+    } else {
+        return 0;
+    }
+
+    if(payload_len <= 0) return 0;
+
+    int payload_offset = payload - packet;
+
+    if(payload_offset + payload_len > nread) return 0; //pacote truncado/malformatado
+
+    const char *forbidden_words[] = {"hack", "malware", "exploit", "payload"};
+    int num_words = 4;
+
+    for(int i = 0; i < num_words; i++){
+        int word_len = strlen(forbidden_words[i]);
+
+        if(memmem(payload, payload_len, forbidden_words[i], word_len) != NULL){ //pacote malicioso detectado
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 
 int main() {
     FILE *log_file = fopen("/var/log/my_firewall.log", "a");
 
     if(log_file == NULL){
-        printf("[X]erro ao abrir a log file");
+        printf("[X] erro ao abrir a log file");
         return 1;
     }
 
@@ -126,13 +180,27 @@ int main() {
             continue;
         }
 
+        int ip_header_len = ip->ihl * 4;
+        if(ip->ihl < 5 || ip_header_len > nread){
+            continue; // cabecalho IP invalido/truncado - descarta
+        }
+
+        int malformed = 0;
+
+        if(ip->protocol == IPPROTO_TCP || ip->protocol == IPPROTO_UDP){
+            if(check_payload((unsigned char *)buffer, nread) == 1){  // verifica se existe alguma palavra maliciosa no payload
+                printf("conexao malicionsa pacote dropado\n");
+                continue;
+            }
+        }
+
         char src_ip[INET_ADDRSTRLEN];
         char dst_ip[INET_ADDRSTRLEN];                                
         inet_ntop(AF_INET, &ip->saddr, src_ip, INET_ADDRSTRLEN);
         inet_ntop(AF_INET, &ip->daddr, dst_ip, INET_ADDRSTRLEN);
 
-        int pacote_processado = 0;
-
+        int processed_packet = 0;
+        
         for(int i = 0; i < total_rules; i++){
 
             // verifica se o ip do pacote ta na lista ou pertence a uma rede da lista
@@ -145,15 +213,24 @@ int main() {
                     if(ip_list[i].verbose){
                         log_event(log_file, "DENY", src_ip, dst_ip, ip->protocol, 0);
                     }
-                    pacote_processado = 1; // marca que o pacote foi tratado (descartado)
+                    processed_packet = 1; // marca que o pacote foi tratado (descartado)
                     break;    
             
                 case TARPIT:                                    
                     if(ip->protocol != IPPROTO_TCP){
-                        break; // Se não for TCP, ignora o tarpit e avalia próximas regras ou da allow
+                        printf("[!] Pacote nao-TCP de %s bloqueado (regra TARPIT nao aplicavel)\n", src_ip);
+
+                        if(ip_list[i].verbose){
+                            log_event(log_file, "TARPIT-DENY", src_ip, dst_ip, ip->protocol, 0);
+                        }
+                        processed_packet = 1;
+                        break; // se não for TCP, ignora o tarpit e avalia próximas regras ou da allow
                     }
 
-                    if ((size_t)nread < (size_t)(ip->ihl * 4 + sizeof(struct tcphdr))) continue;
+                    if ((size_t)nread < (size_t)(ip_header_len + sizeof(struct tcphdr))){
+                        malformed = 1;
+                        break;
+                    };
                     struct tcphdr *tcp = (struct tcphdr *)(buffer + (ip->ihl*4));
 
                     printf("[*] Aplicando TARPIT em %s:%d\n", src_ip, ntohs(tcp->th_sport));
@@ -177,7 +254,7 @@ int main() {
                     tcp->ack_seq = htonl(attc_seq + 1); 
                     tcp->seq = htonl(rand());
 
-                    // Configura Flags de Resposta para prender a conexão
+                    // flags especificas do tarpit
                     if(tcp->syn){
                         tcp->syn = 1;
                         tcp->ack = 1;
@@ -189,25 +266,51 @@ int main() {
                     // zera o parametro window (principal caracteristica do tarpit)
                     tcp->window = htons(0);
 
-                    // Força o tamanho total do IP a ser apenas os cabeçalhos (corta payloads antigos)
-                    int ip_hdr_len = ip->ihl * 4;
+                    // força o tamanho total do IP a ser apenas os cabeçalhos (corta payloads antigos)
                     int tcp_hdr_len = tcp->doff * 4;
-                    int novo_tot_len = ip_hdr_len + tcp_hdr_len;
+                    int novo_tot_len = ip_header_len + tcp_hdr_len;
                     ip->tot_len = htons(novo_tot_len);
 
                     // recalcula os checksums com os novos valores
                     ip->check = 0;
-                    ip->check = checksum_ip((uint16_t *)ip, ip_hdr_len);
+                    ip->check = checksum_ip((uint16_t *)ip, ip_header_len);
 
                     tcp->check = 0;
                     tcp->check = checksum_tcp(ip, tcp, tcp_hdr_len);
 
                     // manda o pacote tarpit modificado de volta pra rede
                     write(tunfd, buffer, novo_tot_len);
-                    pacote_processado = 1;
+                    processed_packet = 1;
                     break;
 
-                case ALLOW:                 
+                case ALLOW:
+                    if(ip->protocol == IPPROTO_ICMP){
+                        if(ip_header_len + (int)sizeof(struct icmphdr) > nread){
+                            malformed = 1;
+                            break;
+                        }
+
+                        struct icmphdr *icmph = (struct icmphdr *)(buffer + ip_header_len);
+
+                        if(icmph->type == ICMP_ECHO){
+                            printf("pacote icmp recebido");
+                            icmph->type = ICMP_ECHOREPLY;
+
+                            uint32_t original_saddr = ip->saddr;
+                            ip->saddr = ip->daddr;
+                            ip->daddr = original_saddr;
+
+                            ip->check = 0;
+                            ip->check = checksum_ip((uint16_t *)ip, ip_header_len);
+                            
+                            icmph->checksum = 0;
+
+                            int icmp_len = ntohs(ip->tot_len) - ip_header_len;
+                            icmph->checksum = checksum_ip((uint16_t *)icmph, icmp_len);
+                
+                        }
+                    }
+
                     if(ip_list[i].verbose){
                         log_event(log_file, "ALLOW", src_ip, dst_ip, ip->protocol, 0);
                     }
@@ -216,17 +319,22 @@ int main() {
                     if(write_bytes < 0){
                         printf("[!] Erro ao encaminhar o pacote ALLOW\n");
                     }
-                    pacote_processado = 1;
+                    processed_packet = 1;
                     break;
                 }
             }
-            if (pacote_processado) break; // sai do laço de regras se o pacote já teve um veredito
+            if (processed_packet) break; // sai do laço de regras se o pacote já teve um veredito
+        }
+        
+        if(malformed){
+            continue;
         }
 
-        // SE O PACOTE NÃO BATEU EM NENHUMA REGRA: 
-        // Comportamento padrão : se n ta na lista, passa direto
-        if (!pacote_processado) {
-            write(tunfd, buffer, nread);
+        //comportamento padrão: se n ta na lista, fica como DENY
+        if (!processed_packet) {
+            printf("[!] Pacote de %s sem regra correspondente - descartado (default DENY)\n", src_ip);
+            log_event(log_file, "DEFAULT-DENY", src_ip, dst_ip, ip->protocol, 0);
+            
         }
     }
     close(tunfd);

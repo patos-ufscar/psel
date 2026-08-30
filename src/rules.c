@@ -1,6 +1,6 @@
 /*
-    Leitura do arquivo de configuracao, lendo apenas as linhas que tenham uma estrutura valida ( sem #, /r,/n)
-    Retorno: lista dos ips presentes no arquivo
+    leitura do arquivo de configuracao, lendo apenas as linhas que tenham uma estrutura valida ( sem #, /r,/n)
+    retorno: lista dos ips presentes no arquivo
 */
 
 #include "rules.h"
