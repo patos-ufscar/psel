@@ -1,88 +1,71 @@
 # PATOS/POMBO PSEL 2.0
+# Requisitos:
 
-### 1. Segurança & Redes - Firewall simples em UserSpace
+Para o cumprimento do desafio eram necessário os seguintes requisitos:
 
-Você deve fazer um firewall em userspace do **zero**, lidando com o recebimento e filtragem de pacotes, tudo isso na mão, sem usar qualquer biblioteca que abstraia demais o código. Você deve fazer com que o seu firewall atue em um IP diferente do IP da sua máquina, criando uma interface de rede virtual (TUN) e roteando o tráfego de uma sub-rede inteira (ex: 10.0.0.x/24) para ela.
+-   Funcionamento em cima de um IP específico, diferente do IP da sua
+    máquina
+-   Filtragem e resposta de PING (ICMP)
+    -   Bloquear pelo menos um destino da sub-rede de receber qualquer
+        pacote
+    -   Deve responder ao ping efetuado por outro terminal
+-   Filtragem de pacotes UDP Deve filtrar pacotes UDP recebidos baseado
+    em uma lista de palavras proibidas
+-   Filtragem de pacotes TCP Deve filtrar pacotes TCP recebidos baseado
+    em uma lista de palavras proibidas
 
-Para que você tenha uma ideia geral do que é um firewall, separamos esta imagem:
+# Etapas efetuadas:
 
-![IMAGE](images/firewall.jpeg)
+## Elaboração de um cliente para os testes
 
-Você não pode utilizar linguagens que abstraiam demais o seu código, ou seja: nada de Python e JavaScript. Exemplo (a não ser seguido):
+Com ajuda do Deepseek e com os requisitos apresentados, fiz em go um
+executavel que simulava um cliente do firewall, o programa realiza as
+funções de envio de ICMP, UDP e TCP
 
-```python
-from pyfire import Firewall
+## Funcionamento em cima de um IP específico, diferente do IP da sua máquina
 
-firewall = Firewall(ip)
+Primeiramente para essa etapa eu segui pelo que apontada o README, em
+que dizia:
 
-firewall.ban(word_list)
-firewall.ban(ip)
-```
+> Criando uma interface de rede virtual (TUN) e roteando o tráfego de
+> uma sub-rede inteira
 
- Nós particularmente recomendamos as seguintes linguagens:
-- `C/C++`
-- `ASM`
-- `Go`
-- `Rust`
-- `Zig`
-- `Clojure`
-- `Erlang`
-- Qualquer outra desde que **não** tenha muita coisa pronta.
+Nunca tinha trabalhado com essa interface então fui ver o que encontrava
+na web sobre, iniciei com [esse
+post](https://www.gabriel.urdhr.fr/2021/05/08/tuntap/), em que explicava
+como utilizar a interface, ler os pacotes e consegui ter uma noção
+melhor para a implementação, também apresentou as configurações via
+terminal para configurar um ip, no post também é utilizado o ScaPy, que
+auxilia para compreender a estrutura do pacote para o parsing do que
+está sendo transferido
 
-Este desafio tem como objetivo testar a resiliência de vocês em aprender novas tecnologias e o quão longe estão dispostos a ir começando do zero.
+## Implementação
 
-> Você só deve utilizar bibliotecas que são ESSENCIAIS para o funcionamento do seu projeto e que não vão abstrair nenhum código relacionado ao funcionamento do firewall.
+No projeto implementei os arquivos do tun~device~, a classe funciona
+similar ao exemplo utilizado no post, a ideia é que a classe possibilite
+ler e escrever no \"/dev/net/tun\", além de configurar a subnet para
+utilização
 
-Os seguintes tópicos serão os principais **pontos de avaliação** do seu projeto:
+### Classes principais
 
-- **Funcionamento em cima de um IP específico, diferente do IP da sua máquina**
-- **Filtragem e resposta de PING (ICMP)**
-    - Deve bloquear pelo menos um destino da sub-rede de receber qualquer pacote (ex: 10.0.0.2 e 10.0.0.3, recebem pacotes, já 10.0.0.50 não recebe pacote nenhum)
-    - Deve responder ao ping efetuado por outro terminal
+A classe principal que organiza o sistema está na classe Firewall, que
+está no arquivo Firewall.cpp e Firewall.hpp, onde se configura as
+palavras e os ips proibidos, nela está também a função Run, que é onde
+está o main loop do programa, verifica-se o ip, faz o parsing da
+mensagem recebida pelo Tun e depois chama o método principal que é o
+dispatch
 
-- **Filtragem de pacotes UDP**
-    - Deve filtrar pacotes UDP recebidos baseado em uma lista de palavras proibidas
+    void Firewall::dispatch(TunDevice& tun, uint8_t* buf, const ParsedIp& p) {
+        switch (p.hdr->proto) {
+            case IP_PROTO_ICMP: handleIcmp(tun, buf, p); break;
+            case IP_PROTO_UDP: handleUdp(tun, buf, p); break;
+            case IP_PROTO_TCP: handleTcp(tun, buf, p); break;
+            default:
+                Logger::info("DROP", "proto " + std::to_string((int)p.hdr->proto) + " nao suportado src=" +
+                                          p.src + " dst=" + p.dst);
+        }
+    }
 
-- **Filtragem de pacotes TCP**
-    - Deve filtrar pacotes TCP recebidos baseado em uma lista de palavras proibidas
-
-- Documentação
-- Colaboração
-    - Tente disponibilizar as fontes de pesquisa que você utilizou para construir seu projeto
-- Organização e Versionamento de Código
-- Experiência num geral. Não é só um código
-
-Além disso, existem alguns diferenciais para este projeto que você pode tentar fazer (sendo completamente opcionais):
-- Logs customizadas para cada interação no terminal
-- Exibição do conteúdo dos pacotes (payload) caso existam
-- Three-Way Handshake do TCP (SYN e SYN-ACK)
-- Forjar pacotes ACK para aceitação e RST para rejeição de pacotes maliciosos.
-
-Se você desejar inserir um diferencial diferente dos citados acima, sinta-se livre para fazer isso! Nós recomendamos fortemente que você não se limite a fazer apenas o que nós pedimos.
-
-Você pode usar IA, mas caso você utilize, use com sabedoria, lembre-se que faremos perguntas técnicas sobre seu código durante a entrevista.
-
-Outro ponto importante: nós queremos acompanhar o seu processo de aprendizado enquanto você faz o PSEL, então tente fazer commits sempre que você conseguir fazer algum progresso, grande ou pequeno!
-
-``O código deve ser entregue em um repositório do GitHub, no caso, um fork deste repositório aqui. Quando tudo estiver finalizado, abra um pull request para a branch main e seu projeto estará entregue. Lembre-se de adicionar um README.md``
-
-Se você tiver feito tudo corretamente e seu código for aprovado, você terá uma fase de entrevista, comum a todos os 4 desafios deste processo seletivo.
-
-Finalmente, tenha em mente que:
-- Você pode e deve contatar qualquer membro do PATOS em caso de dúvidas sobre o PSEL.
-- Você pode deixar sua dúvida pública para outras pessoas que desejam fazer o PSEL mandando-a em [Issues](https://github.com/patos-ufscar/psel/issues)
-- Não se sinta pressionado a fazer tudo, foque no que se sente confortável.
-- Envie mesmo se não conseguir todas as partes essenciais, documente suas dificuldades.
-- No seu README, descreva como foi fazer o processo seletivo, o que você aprendeu, etc. **Documente sua jornada**.
-
-``Boa sorte!``
-
-> Lembrando que o processo é pra ser bem de boa, queremos ver até onde conseguem ir/se empurram, sem preocupação em fazer todos os essenciais.
-
-> É difícil de propósito pra separar quem está disposto a se desafiar de quem não quer sair da zona de conforto, então só de **tentar** fazer os essenciais, você já sai no lucro.
-
-
-- Firewall escrito em C com poucas funcionalidades para referência: https://github.com/pagekite/libunaccept
-
-- Como funciona um firewall: https://www.fortinet.com/resources/cyberglossary/how-does-a-firewall-work
+que é onde verifica-se a partir do header do pacote se aquela mensagem
+corresponde à um ICMP,UDP ou TCP, chamando os metodos relacionados
 
