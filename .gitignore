@@ -1,1 +1,35 @@
+# temp
 *.temp
+
+# C++ / server/
+*.o
+*.obj
+*.out
+server/firewall
+server/*.d
+
+# Go / client/
+client/firewall_client
+client/*.exe
+client/*.test
+client/*.out
+bin/
+dist/
+
+# Go cache / modules (keep go.mod/go.sum, ignore local cache)
+vendor/
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / misc
+*.log
