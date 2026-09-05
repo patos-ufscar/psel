@@ -12,7 +12,7 @@ Para o cumprimento do desafio eram necessário os seguintes requisitos:
 
 * Etapas efetuadas:
 ** Elaboração de um cliente para os testes
-Com ajuda do deepseek e com os requisitos apresentados, fiz em go um executavel que simulava um cliente do firewall, o programa realiza as funções de envio de ICMP, UDP e TCP
+Com ajuda do Deepseek e com os requisitos apresentados, fiz em go um executavel que simulava um cliente do firewall, o programa realiza as funções de envio de ICMP, UDP e TCP
 
 ** Funcionamento em cima de um IP específico, diferente do IP da sua máquina
 Primeiramente para essa etapa eu segui pelo que apontada o README, em que dizia:
@@ -23,6 +23,7 @@ Nunca tinha trabalhado com essa interface então fui ver o que encontrava na web
 ** Implementação
 No projeto implementei os arquivos do tun_device, a classe funciona similar ao exemplo utilizado no post, a ideia é que a classe possibilite ler e escrever no "/dev/net/tun", além de configurar a subnet para utilização
 *** Classes principais
+A classe principal que organiza o sistema está na classe Firewall, que está no arquivo Firewall.cpp e Firewall.hpp, onde se configura as palavras e os ips proibidos, nela está também a função Run, que é onde está o main loop do programa, verifica-se o ip, faz o parsing da mensagem recebida pelo Tun e depois chama o método principal que é o dispatch
 #+begin_src
 void Firewall::dispatch(TunDevice& tun, uint8_t* buf, const ParsedIp& p) {
     switch (p.hdr->proto) {
@@ -34,5 +35,5 @@ void Firewall::dispatch(TunDevice& tun, uint8_t* buf, const ParsedIp& p) {
                                       p.src + " dst=" + p.dst);
     }
 }
-
 #+end_src
+que é onde verifica-se a partir do header do pacote se aquela mensagem corresponde à um ICMP,UDP ou TCP, chamando os metodos relacionados
