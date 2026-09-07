@@ -42,7 +42,7 @@ fn extrai_tamanho_arquivo(requisicao: &str) -> usize {
             if pedacos.len() == 2 { // caso tenha um espaço de separação entre : e o número
                 // Pega o número (ex: " 15042"), remove os espaços e converte para número (usize)
                 let numero_str = pedacos[1].trim();
-                if let Ok(tamanho) = numero_str.parse::<usize>() {
+                if let Ok(tamanho) = numero_str.parse::<usize>() { // transforma o número de str para número usize
                     return tamanho;
                 }
             }
@@ -140,40 +140,47 @@ fn backend_cabuloso(mut stream: TcpStream) {
                 }
             } else if metodo == "GET" {
 
-            match fs::read(&caminho_no_disco) {
-                Ok(conteudo_do_arquivo) => {
-                    println!("Arquivo encontrado. manda o bglh pro load balancer");
+                match fs::read(&caminho_no_disco) {
+                    Ok(conteudo_do_arquivo) => {
+                        println!("Arquivo encontrado. manda o bglh pro load balancer");
 
-                    let tamanho = conteudo_do_arquivo.len();
+                        let tamanho = conteudo_do_arquivo.len();
 
-                    let tipo = descobre_content_type(&caminho_no_disco);
+                        let tipo = descobre_content_type(&caminho_no_disco);
 
-                    let cabecalho = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", tipo, tamanho);
+                        let cabecalho = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", tipo, tamanho);
 
-                    let mut resposta_completa = cabecalho.as_bytes().to_vec();
-                    resposta_completa.extend(conteudo_do_arquivo);
+                        let mut resposta_completa = cabecalho.as_bytes().to_vec();
+                        resposta_completa.extend(conteudo_do_arquivo);
 
-                    // Escreve tudo de volta no socket
-                    if let Err(e) = stream.write_all(&resposta_completa) {
-                        println!("Erro ao enviar a resposta: {}", e);
+                        // Escreve tudo de volta no socket
+                        if let Err(e) = stream.write_all(&resposta_completa) {
+                            println!("Erro ao enviar a resposta: {}", e);
+                        }
+
                     }
+                    Err(_) => {
+                        println!("Arquivo não encontrado. 404");
 
-                }
-                Err(_) => {
-                    println!("Arquivo não encontrado. 404");
+                        // Tenta ler o arquivo 404.html da pasta public
+                        let conteudo_404 = fs::read("public/404.html").unwrap_or_else(|_| {
+                            // Se não encontrar o arquivo, retornar essa string
+                            String::from("<html><body><h1>404 - Arquivo 404.html ausente</h1></body></html>").into_bytes()
+                        });
+                        let cabecalho = format!(
+                            "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", 
+                            conteudo_404.len()
+                        );
+                        // Junta tudo
+                        let mut resposta_erro = cabecalho.as_bytes().to_vec();
+                        resposta_erro.extend(conteudo_404);
 
-                    let corpo = "<html><body><h1>Erro 404: o pato nao encontrou o bglh</h1></body></html>";
-                    let cabecalho = format!("HTTP/1.1 404 Not Found\r\nContent-Length: {}\r\n\r\n", corpo.len());
-
-                    // Junta tudo
-                    let resposta_erro = format!("{}{}", cabecalho, corpo);
-
-                    if let Err(e) = stream.write_all(resposta_erro.as_bytes()){
-                        println!("Erro ao enviar erro 404: {}", e);
+                        if let Err(e) = stream.write_all(&resposta_erro){
+                            println!("Erro ao enviar erro 404: {}", e);
+                        }
                     }
                 }
             }
-        }
         }
     }
 }
