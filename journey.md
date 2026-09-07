@@ -103,3 +103,7 @@ curl -O https://js-dos.com/6.22/current/wdosbox.js
 curl -O https://js-dos.com/6.22/current/wdosbox.wasm
 curl -O https://js-dos.com/6.22/current/wdosbox.wasm.js
 curl -L -o doom.zip "https://archive.org/download/DoomsharewareEpisode/doom.ZIP"
+
+# Considerações Finais
+
+Well, acho que finalmente terminei este projeto de Load Balancer. Posso dizer que foi um desafio bem desafiador, ainda mais para mim que não tinha conhecimento algum sobre redes hahaha. Mas foi divertido, e claro, é gratificando e bem legal ver o projeto funcionando na prática. Eu ainda não entendi a fundo como as coisas da rede funcionam (sou meio ateu nisso ainda), espero ter realmente aprendido o básico de como isso funciona (vamos descobrir na entrevista). Enfim, foi bem legal desenvolver isso, aprendi algumas coisas, na qual eu nem fazia idéia que existiam e eram tão necessárias. Enfim, dale Patos.
