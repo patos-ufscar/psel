@@ -1,0 +1,31 @@
+1. rules/policies
+2. filosophys
+3. stateful/stateless - acho que stateless
+
+
+Types:
+1. Packet-Filtering -> (ALLOW/DENY/DROP)
+IP
+PORT
+PROTOCOL
+DESTINATION
+
+
+Answers:
+
+ALLOW 	- Doesn't reponds to sender, but accepts the package
+DENY 	- Reponds to sender
+DROP	- Doesn't reponds to sender
+
+
+TCP: (controlled)
+tree-way handshake
+tracks packages
+
+UDP: (fast)
+sends data without much reliability
+
+
+:: NOW ::
+
+COMO SERÁ A ESTRUTURA DAS REGRAS? de preferência generalizada.
