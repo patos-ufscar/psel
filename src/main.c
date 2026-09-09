@@ -185,6 +185,8 @@ int main() {
             continue; // cabecalho IP invalido/truncado - descarta
         }
 
+        if (ntohs(ip->tot_len) > nread) continue;  // tot_len nao bate com o que foi lido
+        
         int malformed = 0;
 
         if(ip->protocol == IPPROTO_TCP || ip->protocol == IPPROTO_UDP){
@@ -251,7 +253,7 @@ int main() {
 
                     // ajusta os numeros de sequencia
                     uint32_t attc_seq = ntohl(tcp->seq);
-                    tcp->ack_seq = htonl(attc_seq + 1); 
+                    tcp->ack_seq = htonl(attc_seq + 1);     // caso o handshake ja tivesse sido feito o correto seria attc_seq + payload_len
                     tcp->seq = htonl(rand());
 
                     // flags especificas do tarpit
@@ -279,7 +281,10 @@ int main() {
                     tcp->check = checksum_tcp(ip, tcp, tcp_hdr_len);
 
                     // manda o pacote tarpit modificado de volta pra rede
-                    write(tunfd, buffer, novo_tot_len);
+                    int tarpit_write_bytes = write(tunfd, buffer, novo_tot_len);
+                    if(tarpit_write_bytes < 0){
+                        printf("[!] Erro ao encaminhar o pacote TARPIT\n");
+                    }
                     processed_packet = 1;
                     break;
 
