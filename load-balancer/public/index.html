@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Balancer Cabuloso</title>
+    <style>
+        /* Estilos básicos para organização */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: white;
+            background-color: black;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6; 
+        }
+        header {
+            background-color: gray;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            background-image: url(./patos.jpg);
+        }
+        .titulo-pagina {
+            background-color: gray;
+            border: 5px, color(srgb red green blue);
+            display: inline-block; 
+            padding: 8px 16px;  
+            border-radius: 40px;
+        }
+        nav {
+            background-color: #333;
+            text-align: center;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            display: inline-block;
+        }
+        nav a:hover {
+            background-color: #575757;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        footer {
+            background-color: black;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabeçalho da página -->
+    <header>
+        <div class="titulo-pagina">
+            <h1>Home</h1>
+        </div>
+    </header>
+
+    <!-- Menu de Navegação -->
+    <nav>
+        <a href="./patos.jpg">Patos</a>
+        <a href="./ufscar.jpg">UFSCar</a>
+        <a href="./matriz.pdf">Grade BCC</a>
+        <a href="./doom.html">Doom</a>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        <h2>Sobre Mim</h2>
+        <p>Hi guys from Patos, eu sou o Renan, 025 da Ciência da Computação e este é o meu PSEL - Load Balancer.</p>
+        
+        <h3>Como Usar</h3>
+        <p>(Antes de mais nada, peço desculpas por essa página, eu quis fazer algo mais bonitinho, mas eu obviamente não sou um designer.)</p>
+        <p>Logo acima, no setor de navegação, tem algumas opções de arquivos para você visualizar (eu estava sem criatividade para colocar arquivos de testes).
+           "Patos" e "UFSCar" são imagens, "Grade BCC" é um PDF e "Doom" é o Doom rodando em um emulador de DOS feito em JS e WebAssembly (claro que isso já estava pronto).
+        </p>
+
+        <p>Você pode ver o algoritmo Round Robin do Load Balancer funcionando pelo terminal, onde é possível ver para qual servidor backend está sendo roteado.</p>
+
+        <p>Este Load Balancer tem os métodos GET e POST implementados, então você pode enviar um arquivo via curl e pedir ele na URL, e seu arquivo deve ser mostrado sem problemas.
+            Eu provavelmente coloquei um exemplo de como fazer isso no README do github.
+        </p>
+    </main>
+
+    <!-- Rodapé -->
+    <footer>
+        <p>Load Balancer Rodando na Porta 8080</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Load Balancer Rust - Mas Roda Doom?</title>
+    <!-- Puxa o arquivo do seu Load Balancer! -->
+    <script src="js-dos.js"></script>
+    <style>
+        body { 
+            background: #111; color: #fff; text-align: center; 
+            font-family: monospace; padding-top: 20px;
+        }
+        canvas { 
+            width: 800px; height: 600px; 
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            border: 2px solid #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>PSEL PATOS: Load Balancer - By Renan</h1>
+    <p>But can it run Doom? Yeah</p>
+    
+    <canvas id="doom-canvas"></canvas>
+    
+    <script>
+        // Inicia a engine do DOS apontando para os arquivos do seu servidor
+        Dos(document.getElementById("doom-canvas"), { 
+            wdosboxUrl: "wdosbox.js" // O JS automaticamente pede o wdosbox.wasm também!
+        }).ready(function(fs, main) {
+            // Baixa o jogo do seu servidor, extrai e executa
+            fs.extract("doom.zip").then(function() {
+                main(["-c", "DOOM.EXE"]); 
+            });
+        });
+    </script>
+</body>
+</html>
