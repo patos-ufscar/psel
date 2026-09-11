@@ -1,4 +1,5 @@
 # PATOS/POMBO PSEL 2.0
+![GIF](https://media1.tenor.com/m/wJoIg9kMUB0AAAAC/duck-spin.gif)
 # Userspace C Firewall
 
 Um firewall customizado operando em espaço de usuário (*userspace*), escrito inteiramente em C. O projeto intercepta, analisa e filtra tráfego de rede capturado através de uma interface virtual `tun0`, utilizando regras de roteamento avançadas no Linux.
