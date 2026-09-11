@@ -1,0 +1,10 @@
+# =====================================================================
+# CONFIGURAÇÃO DE REGRAS DO FIREWALL (conf.rc)
+# =====================================================================
+# O formato obrigatório para o código atual é:
+# [ação] [ip]         -> Sem log detalhado
+# [ação] verbose [ip] -> Com log detalhado
+# caso queira usar um endereço de rede use [network-ip/mask]
+# =====================================================================
+
+allow 127.0.0.1

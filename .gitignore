@@ -1,1 +1,11 @@
+firewall
+
+*.o
+*.out
+
+*~
+*.swp
 *.temp
+
+/tmp/firewall.pid
+*.log
