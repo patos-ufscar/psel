@@ -1,317 +1,114 @@
-# PATOS/POMBO PSEL 2.0
+# PATOS PSEL 2.0 - Load Balancer in GO
 
-Tá sempre aberto, só enviar o PR
+Welcome to my submission for the PATOS Selection Process (PSEL 2.0). 
 
----
+## About the Project
 
-### Hey! Bem-vindo(a) à segunda edição do PATOS/POMBO PSEL! **Clap Clap 👏👏**
+This repository contains a custom **Load Balancer built from scratch in Golang**. 
 
-![GIF](images/duck-dance.gif)
+In accordance with the challenge guidelines, this project avoids high-level abstractions, web frameworks, and standard HTTP libraries (such as `net/http`). Instead, it handles raw network sockets (`net.Conn`), manages manual HTTP request/header parsing, and manages traffic distribution using low-level Go primitives.
 
-Durante os quase **dois** primeiros anos do PATOS, este processo de entrada de todos era um único desafio: a criação de um **reverse proxy**. Na prática, o que queríamos era entregar algo de "baixo nível" que deveria ser feito sem a ajuda de bibliotecas e sem ser nas **linguagens fáceis**, como Python ou JavaScript.
-E o objetivo de vocês era justamente receber algo difícil e não tão comum e saber lidar com o "Ok, eu não sei nada disso" principalmente indo para o "Eu não sei nada disso, mas vou aprender, eu não tenho medo de errar e aprender algo novo".
+## Features & Implementation Strategy
 
-Ficamos muito felizes com o resultado, tanto na quantidade de pessoas quanto na qualidade de cada uma delas. Descobrimos que, sim, o processo seletivo funcionou bem e conseguimos trazer pessoas incríveis para o time, que de fato se encaixaram na cultura e no jeito PATOS de ser.
-Ficamos mais felizes ainda que não precisamos também de nenhuma bullshitagem de seleção como dinâmicas de grupo, testes de personalidade, perguntas capciosas ou qualquer outra coisa que não fosse um bom desafio técnico.
+- **Raw Socket Operations:** Built directly on top of Go's `net` package for raw TCP listeners and connections.
+- **Custom Request Parser:** A hand-written HTTP reader, shared by the balancer and the backends, that parses the request line, the header block and the body with no external parsing libraries. Both tiers read a request through the same code, so a proxy and the server behind it can never disagree about where one request ends and the next begins.
+- **Load Balancing Strategy:** Least Connections selection, filtered by backend health, with a random tie-break and fallback to the next candidate when a backend cannot be reached.
+- **Active Health Checking:** A background routine probing every backend over raw TCP on a fixed interval, tracking each one as it goes down and comes back.
+- **File Uploads:** Images arrive as the raw body of a request, are validated by their signature bytes rather than by anything the client claims about them, and are written under a name derived from their own contents, so two files never collide and the same file never duplicates.
+- **Timeouts and Deadlines:** Dial timeouts and connection deadlines on both tiers, with the balancer deliberately giving up on a silent backend before its own client gives up on it.
+- **No Dependencies:** Standard library only. `go.mod` requires nothing at all.
 
-Contudo, nós sabíamos que o processo poderia ser melhor. Antes, sendo apenas um desafio específico, deixávamos de lado muitas outras áreas de atuação do PATOS e seus integrantes. Um reverse proxy foca muito em redes, que de fato é uma das nossas grandes áreas de atuação, mas e o resto? E o pessoal de Segurança, Hardware, SRE, Open Source?
-Além disso, acreditamos que chegamos em um patamar (de fato elevado) de qualidade no antigo desafio. Os últimos processos seletivos tiveram uma qualidade de entrega tão alta (diga-se de passagem, enviados todos por bixos) que não saberíamos mais como baixar as expectativas ou aumentar o desafio para mais entregas.
+## Running It
 
-Pensando nisso, resolvemos criar o **PATOS PSEL 2.0**. Um processo seletivo que abrange mais áreas do PATOS e que permite que você escolha o desafio que mais se encaixa com o seu perfil e com a sua vontade de aprender.
+All you need is Go. There are no dependencies to fetch.
 
-----
-
-### Quem pode participar?
-
-TODO O MUNDO! Não importa de bixo a veterano de dentro ou fora da UFSCar, de dia ou noite, nas ferias ou durante as aulas, se você tem vontade de aprender e acha que o PATOS é um lugar onde você pode aprender, se desenvolver e contribuir, esse processo seletivo é pra você!
-
-### O que é o PATOS e POMBO? São a mesma coisa? O processo seletivo é para qual dos dois?
-
-PATOS é o grupo de Open Source da UFSCar. Além de ser um grupo de estudos, é um grupo de pesquisa e de desenvolvimento, formado por pessoas que se juntam para aprender e contribuir, tanto com código quanto com conhecimento. Outra grande frente nossa são os Aulões, onde ensinamos o que sabemos para a comunidade, seja ela interna ou externa.
-Já o POMBO é o grupo de Cibersegurança da UFSCar. Sua existência é anterior ao PATOS, mas hoje em dia é um subgrupo deste, representando a "frente" de segurança.
-Este processo seletivo é para ambos, e você pode escolher qualquer desafio para entrar no PATOS, que consequentemente te dá acesso ao POMBO, caso queira participar da frente de segurança.
-
-#### Como funciona a hierarquia no PATOS/POMBO?
-
-Não há, espero ter ajudado 👍!
-Simplesmente não achamos que faça sentido. O PATOS funciona como uma comunidade de pessoas que se juntam para aprender e contribuir (com código, conhecimento, recomendação e memes), não existe "níveis" ou "hierarquia" dentro do grupo, todos são iguais e tem voz ativa desde o dia um.
-Além disso, não gostamos da forma engessada e ultrapassada que outros grupos têm, sem contar o tanto de confusão e discórdia que isso gera entre os membros. (Sério que vocês querem receber ordens de outro aluno sem nem receber um salário? Não, obrigado ~Marlon).   
-Se você entrar no PATOS, saiba que você é membro. No máximo vamos ter um status "bixo" e "veterano", mas isso é só para diferenciar quem entrou recentemente de quem já tem mais tempo. Não tem nada a ver com "nível", e você pode levantar a mão, puxar algo ou criticar algo também!
-
-#### O que fazemos dentro do PATOS
-
-Uma das coisas que fazemos dentro do PATOS são os aulões que ocorrem durante o ano todo, sem uma data muito fixa. Os temas são variados e livres (mas na maioria das vezes relacionados a projetos open source, redes, segurança, cloud, etc.), e são escolhidos pelos próprios membros. Se você estiver estudando algum tema interessante e decidir que quer expor esse conhecimento publicamente, você pode marcar um aulão pra você sempre que quiser, sobre o tema que quiser.
-
-Além dos aulões, o PATOS também detém uma boa bagagem de participações em Hackathons, tendo ficado no pódio nos três últimos Hackathons da SECOMP. Também tivemos um pódio importante em um Hackathon internacional de eBPF, o eBPF Summit 2025, em que quatro integrantes do PATOS formaram um grupo e venceram a competição. Dito isso, se você desejar participar de um hackathon, basta mandar no grupo que certamente você irá conseguir fechar um time para competir.
-
-Ainda sobre as competições, o POMBO, a frente de segurança do PATOS, participa de alguns CTFs ao longo do ano, sendo uma boa oportunidade para testar seus conhecimentos de segurança e técnicas de penetração.
-
-Durante a SECOMP, também organizamos um CTF próprio que todos que participam da Semana da Computação podem jogar. Cada membro (que quiser participar da produção de desafios) envia um, dois ou mais challenges para compor o CTF da SECOMP.
-
-Finalmente, o PATOS também é um lugar muito propício para ir a eventos de computação. Você sempre pode mandar um evento que deseja ir no grupo e ver se outros membros gostariam de ir com você! Às vezes isso facilita muito e barateia os custos, já que vocês podem dividir o meio de transporte e afins.
-
-Vale mencionar que o PATOS é um grupo bem aberto e isso significa que você pode conversar com os outros membros para fazer qualquer tipo de projeto em grupo, desde que ele seja pertinente e se relacione com os temas de PATOS (Redes, Open Source, Segurança, etc.)
-
-### Quais as vantagens de entrar no PATOS?
-
-#### Experiência
-
-Durante as atividades do grupo, você poderá desenvolver diversas habilidades técnicas, por conta dos Hackathons e projetos em que acabamos participando, e também soft skills, devido aos aulões que proporcionamos para a comunidade — construindo uma base sólida para boas apresentações e para uma boa comunicação.
-
-Além disso, os membros do grupo sempre estão pesquisando ou estudando algum conteúdo novo, fazendo do PATOS um grupo que reúne pessoas focadas em melhorar o próprio repertório intelectual.
-
-#### Você não estará sozinho
-
-Como mencionado alguns parágrafos acima, o PATOS é um grupo que incentiva as atividades coletivas, e dificilmente você não conseguirá fechar um grupo para fazer algum projeto, pesquisa ou competição que deseje.
-
-#### Networking
-
-Algo que conta bastante para a vida profissional de todo universitário é o networking. Ter uma boa rede de contatos é essencial para se lançar no mercado de trabalho. O PATOS pode te proporcionar um bom networking, haja vista que alguns membros e ex-membros já passaram por grandes empresas como:
-- `Google`
-- `Red Hat`
-- `Von Braun Labs`
-- `CERN` (Centro de pesquisas nucleares Europeu)
-- `NU`
-- `Magalu`
-- `Leroy Merlin`
-
-Ou seja, o PATOS é um lugar muito bom para conhecer pessoas bem empregadas e que conhecem bem o mercado de trabalho, além de ser um ótimo lugar para se desenvolver academicamente e profissionalmente.
-
----
-
-### Como funciona o PATOS/POMBO PSEL 2.0?
-
-Na segunda edição do PATOS PSEL, você poderá escolher entre quatro desafios diferentes, cada um focado em uma área de atuação do PATOS. Os desafios são:
-
-- 1. Segurança & Redes - Firewall simples em UserSpace
-- 2. Redes - Load Balancer
-- 3. Segurança - Histórico de CTF
-- 4. Open Source / Comunidade - Contribuição para um projeto open source
-
-#### O que esperamos
-- Pesquise, saiba lidar com problemas dificeis e busque aprender coisas novas
-- O PSEL foi pensado pra ser uma jornada, e não um simples desafio de código, por isso, nós gostaríamos que você nos mostrasse seu processo de aprendizado e os desafios que você enfrentou durante ele.
-  
----
-
-### 1. Segurança & Redes - Firewall simples em UserSpace
-
-Você deve fazer um firewall em userspace do **zero**, lidando com o recebimento e filtragem de pacotes, tudo isso na mão, sem usar qualquer biblioteca que abstraia demais o código. Você deve fazer com que o seu firewall atue em um IP diferente do IP da sua máquina, criando uma interface de rede virtual (TUN) e roteando o tráfego de uma sub-rede inteira (ex: 10.0.0.x/24) para ela.
-
-Para que você tenha uma ideia geral do que é um firewall, separamos esta imagem:
-
-![IMAGE](images/firewall.jpeg)
-
-Você não pode utilizar linguagens que abstraiam demais o seu código, ou seja: nada de Python e JavaScript. Exemplo (a não ser seguido):
-
-```python
-from pyfire import Firewall
-
-firewall = Firewall(ip)
-
-firewall.ban(word_list)
-firewall.ban(ip)
+```bash
+git clone https://github.com/CalvinOgata/psel_patos_loadBalancer.git
+cd psel_patos_loadBalancer
+./run.sh
 ```
 
- Nós particularmente recomendamos as seguintes linguagens:
-- `C/C++`
-- `ASM`
-- `Go`
-- `Rust`
-- `Zig`
-- `Clojure`
-- `Erlang`
-- Qualquer outra desde que **não** tenha muita coisa pronta.
+`run.sh` starts five backend servers on ports 8081 through 8085 and the load balancer on port 8080. Open http://localhost:8080 in a browser and you get a page with a button that asks for a random image and a file picker that sends a new one.
 
-Este desafio tem como objetivo testar a resiliência de vocês em aprender novas tecnologias e o quão longe estão dispostos a ir começando do zero.
+Three routes are served:
 
-> Você só deve utilizar bibliotecas que são ESSENCIAIS para o funcionamento do seu projeto e que não vão abstrair nenhum código relacionado ao funcionamento do firewall.
+| Route | What it does |
+| --- | --- |
+| `GET /` | The page itself |
+| `GET /random-image` | Proxied to a backend, which answers with the bytes of a random image and its file name in an `X-Image-Name` header |
+| `POST /upload/<name>` | Takes the raw bytes of a PNG or JPEG as the request body and stores it under a name derived from its contents |
 
-Os seguintes tópicos serão os principais **pontos de avaliação** do seu projeto:
+Uploading from the terminal instead of the page works the same way:
 
-- **Funcionamento em cima de um IP específico, diferente do IP da sua máquina**
-- **Filtragem e resposta de PING (ICMP)**
-    - Deve bloquear pelo menos um destino da sub-rede de receber qualquer pacote (ex: 10.0.0.2 e 10.0.0.3, recebem pacotes, já 10.0.0.50 não recebe pacote nenhum)
-    - Deve responder ao ping efetuado por outro terminal
-
-- **Filtragem de pacotes UDP**
-    - Deve filtrar pacotes UDP recebidos baseado em uma lista de palavras proibidas
-
-- **Filtragem de pacotes TCP**
-    - Deve filtrar pacotes TCP recebidos baseado em uma lista de palavras proibidas
-
-- Documentação
-- Colaboração
-    - Tente disponibilizar as fontes de pesquisa que você utilizou para construir seu projeto
-- Organização e Versionamento de Código
-- Experiência num geral. Não é só um código
-
-Além disso, existem alguns diferenciais para este projeto que você pode tentar fazer (sendo completamente opcionais):
-- Logs customizadas para cada interação no terminal
-- Exibição do conteúdo dos pacotes (payload) caso existam
-- Three-Way Handshake do TCP (SYN e SYN-ACK)
-- Forjar pacotes ACK para aceitação e RST para rejeição de pacotes maliciosos.
-
-Se você desejar inserir um diferencial diferente dos citados acima, sinta-se livre para fazer isso! Nós recomendamos fortemente que você não se limite a fazer apenas o que nós pedimos.
-
-Você pode usar IA, mas caso você utilize, use com sabedoria, lembre-se que faremos perguntas técnicas sobre seu código durante a entrevista.
-
-Outro ponto importante: nós queremos acompanhar o seu processo de aprendizado enquanto você faz o PSEL, então tente fazer commits sempre que você conseguir fazer algum progresso, grande ou pequeno!
-
-``O código deve ser entregue em um repositório do GitHub, no caso, um fork deste repositório aqui. Quando tudo estiver finalizado, abra um pull request para a branch main e seu projeto estará entregue. Lembre-se de adicionar um README.md``
-
-Se você tiver feito tudo corretamente e seu código for aprovado, você terá uma fase de entrevista, comum a todos os 4 desafios deste processo seletivo.
-
-Finalmente, tenha em mente que:
-- Você pode e deve contatar qualquer membro do PATOS em caso de dúvidas sobre o PSEL.
-- Você pode deixar sua dúvida pública para outras pessoas que desejam fazer o PSEL mandando-a em [Issues](https://github.com/patos-ufscar/psel/issues)
-- Não se sinta pressionado a fazer tudo, foque no que se sente confortável.
-- Envie mesmo se não conseguir todas as partes essenciais, documente suas dificuldades.
-- No seu README, descreva como foi fazer o processo seletivo, o que você aprendeu, etc. **Documente sua jornada**.
-
-``Boa sorte!``
-
-> Lembrando que o processo é pra ser bem de boa, queremos ver até onde conseguem ir/se empurram, sem preocupação em fazer todos os essenciais.
-
-> É difícil de propósito pra separar quem está disposto a se desafiar de quem não quer sair da zona de conforto, então só de **tentar** fazer os essenciais, você já sai no lucro.
-
----
-
-### 2. Redes - Load Balancer
-Você deve fazer um load balancer do **zero**, lidando com as conexões e o redirecionamento na mão, sem usar qualquer lib que te auxilie. Além disso, vale ressaltar que você também não pode usar **nenhuma** lib para te ajudar no parsing das requests. Ou seja, coisas desse gênero:
-```python
-from balancer import balance
-import parser
-
-server.balance()
-
-parser.parse(request)
+```bash
+curl -X POST --data-binary @picture.png http://localhost:8080/upload/picture.png
 ```
-são completamente proibidas. Queremos descobrir o quão longe vocês estão dispostos a aprenderem sozinhos, mesmo que tenham que reinventar a roda. O Load Balancer deve funcionar em cima de um servidor de arquivos que pode receber e armazenar arquivos de qualquer tipo, à sua escolha.
 
-Para que você tenha uma ideia básica, o funcionamento de um Load Balancer, pode ser simplificado nesta imagem:
+Two things make the balancing visible. Replacing one of the five with a deliberately slow instance gives the balancer something to route around, and the pool only knows about ports 8081 through 8085, so the replacement has to reuse one of them:
 
-![IMAGE](images/loadbalancer.png)
+```bash
+fuser -k -n tcp 8082
+go run ./server -port 8082 -delay 2s
+```
 
-Este processo seletivo é uma jornada de aprendizado, parte dele é descobrir mais detalhes sobre o que é e como funciona um Load Balancer, para que a sua entrega seja uma entrega com qualidade o suficiente para garantir seu ingresso no PATOS.
+Sending requests one at a time will not show much: with a single request in flight every backend looks equally idle, so the slow one still takes its turn. Send a burst and the least connections rule has something to work with, and the delayed instance starts being passed over:
 
-Lembrando que você só deve utilizar bibliotecas **extremamente** necessárias para que seu projeto rode, como por exemplo libs que conectam seu programa a um socket.
+```bash
+seq 20 | xargs -P 20 -I{} curl -s -o /dev/null -w '%{time_total}\n' http://localhost:8080/random-image
+```
 
-Por fim, como último empecilho, linguagens de extremo alto nível como Python e JavaScript estão banidas neste processo seletivo. Recomendamos que você faça seu projeto em linguagens de baixo nível, como estas:
+Killing a backend shows the other half, the health check: it notices within three seconds, says so in the balancer's output, and requests carry on being served by whoever is left.
 
-- `C/C++`
-- `ASM`
-- `Go`
-- `Rust`
-- `Zig`
-- `Clojure`
-- `Erlang`
-- Qualquer outra desde que **não** tenha muita coisa pronta.
+Ctrl+C stops the balancer, but the five backends were started as background jobs and keep running on their own, so they need stopping separately:
 
-(Em especial, recomendamos C++/Go, pois são linguagens mais parecidas com C, mas com algumas regalias como strings, vetores, etc.)
-
-Nós recomendamos fortemente que você não se limite a fazer *apenas* o que nós pedimos. Sinta-se livre para adicionar um diferencial - que pode ser qualquer coisa, desde que relevante - ao seu código.
-
-As entregas serão individuais, mas sinta-se livre para discutir sobre o PSEL em grupo e para olhar as respostas de outros participantes. 
-
-Sobre IA: "A IA é apenas uma ferramenta. Ela é o **MEIO** e nunca o **FIM**". Se você decidir utilizar, utilize com sabedoria. *Lembre-se que na fase de entrevista, faremos perguntas sobre o seu código!*
-
-``O código deve ser entregue em um repositório do GitHub, no caso, um fork deste repositório aqui. Quando tudo estiver finalizado, abra um pull request para a branch main e seu projeto estará entregue. Lembre-se de adicionar um README.md``
-
-Ao fim do processo, caso seu projeto seja aprovado, haverá uma entrevista individual.
-
-#### Pontos de Avaliação:
-- **HTTP Compilant** (conseguir acessar pelo navegador)
-- **Documentação**
-- **Colaboração** (documentar fontes de informações/código e informar sua jornada)
-- **Organização e versionamento de código**
-- **Experiência no Geral, não apenas um código**
-
-> Vale ressaltar que adicionar um diferencial no seu projeto é completamente opcional.
-
-Finalmente, tenha em mente que:
-- Você pode e deve contatar qualquer membro do PATOS em caso de dúvidas sobre o PSEL.
-- Você pode deixar sua dúvida pública para outras pessoas que desejam fazer o PSEL mandando-a em [Issues](https://github.com/patos-ufscar/psel/issues)
-- Não se sinta pressionado a fazer tudo, foque no que se sente confortável.
-- Envie mesmo se não conseguir todas as partes essenciais, documente suas dificuldades.
-- No seu README, descreva como foi fazer o processo seletivo, o que você aprendeu, etc. **Documente sua jornada**.
-
-
-``Boa sorte!``
-
-> Lembrando que o processo é pra ser bem de boa, queremos ver até onde conseguem ir/se empurram, sem preocupação em fazer todos os essenciais.
-
-> É difícil de propósito pra separar quem está disposto a se desafiar de quem não quer sair da zona de conforto, então só de **tentar** fazer os essenciais, você já sai no lucro.
+```bash
+fuser -k -n tcp 8081 8082 8083 8084 8085
+```
 
 ---
 
-### 3. Segurança - Histórico de CTF
+### Day 0: Getting Started
 
-Se você se interessa mais pela área de segurança e já tem experiência prévia, nós temos boas notícias para você! Você pode entrar no PATOS **sem ter que fazer o firewall ou o load balancer**: basta que você tenha participado de algum CTF e consiga comprovar que resolveu, corretamente, pelo menos um desafio (mas sinta-se à vontade para mostrar mais desafios resolvidos!).
+Laid the groundwork for the project today. I updated `README.md` with the overall project scope, set up `main.go` for the initial core logic, and built a basic `index.html` interface to make testing visual rather than terminal-bound. 
 
-#### O que fazer para participar nesta categoria do PSEL?
+Most of my time was spent studying TCP/IP and HTTP fundamentals, specifically how HTTP is essentially structured text parsing over a network stream. I also spent time dissecting Go's standard libraries (`net`, `bufio`) to understand precisely how each function and connection operates under the hood.
 
-Você ainda deve dar um fork neste GitHub e depois mandar um pull request quando tudo estiver concluído. Você deve **obrigatoriamente** descrever os seguintes aspectos no seu README:
-- Nome do CTF e data que ele ocorreu
-- Tipo do challenge que você resolveu (RevEng, Web, Pwd, etc)
-- Descrever o seu raciocínio para resolver o challenge (por onde você começou, quais vulnerabilidades você encontrou e como você as encontrou, etc.)
-- Explicar as técnicas utilizadas para explorar as vulnerabilidades encontradas
-- Caso você tenha utilizado um script para resolver o challenge, também explique como e por que você fez o script.
-- O famoso Writeup; inclusive, se ele já existir, você pode linká-lo, mas é importante que você escreva um resumo do seu processo de resolução do desafio, mesmo que o writeup já exista, para que a gente possa entender o seu raciocínio e o seu processo de resolução.
-  
+### Day 1: System Architecture & Raw Backend Prototype
 
-> Esses serão os principais pontos de avaliação do seu processo seletivo.
+Took a step back today to refine the overall system architecture. I mapped out the core interaction between three primary components: the frontend interface, the load balancer, and the backend server. To keep the codebase clean and follow idiomatic Go project conventions, I reorganized the load balancer and backend entry points into separate subdirectories (`balancer` and `server`).
 
-Nós gostaríamos também que você nos contasse um pouco da sua história com a segurança da informação e as competições de CTF. Conte um pouco da sua jornada para nós!
+I also evaluated whether to run backend instances inside Docker containers or as standalone Go processes. I decided to start with native Go processes to maintain direct visibility into OS socket behavior before introducing containerization overhead. Finally, I wrote an initial prototype for the raw TCP backend server; it's still bare-bones, but it lays the foundation for image serving in the coming days.
 
-Se você tiver feito tudo, nós o convocaremos para uma entrevista, assim como nos outros desafios!
+### Day 2: Basic Proxy, Run Script & Working Image Delivery
 
-``Boa Sorte!``
+Today was a tough one, but it got the core of the project working end to end. On the backend I tightened up the error handling, restricted the served files to PNG and JPEG, and added an `images` folder so the application finally has something real to hand out. I also reworked the frontend (`index.html`) so it stops announcing "Hello World" and actually displays the images it receives. To avoid juggling two terminals every time I wanted to test something, I wrote a small `run.sh` that starts the backend server and the load balancer together.
 
-___
+The backend was by far the most time-consuming part. Adding new routes and reshaping them as the application kept evolving was challenging, and getting everything to line up (the manual HTTP parsing, the ports, and Go's syntax, which is fun and intuitive but has its quirks) was genuinely painful at times.
 
-### 4. Open Source / Comunidade - Contribuição para um projeto open source
+Two bugs stand out. The first: the button kept returning a 404 and I was convinced the backend was at fault, but the request never reached it. The balancer only knew the `/` route, so it was answering `/random-image` itself. Worse, its response builder hardcoded `HTTP/1.1 200 OK`, so that "404" arrived at the browser as a *successful* response and the page cheerfully rendered the error text as an image path. The second: the server created `./images` but read from `../images`: two different folders, depending on where the process was launched from. Both were good reminders that when you write HTTP by hand, nothing is going to catch these mistakes for you.
 
-Para aqueles que já possuem experiência prática em projetos open source, o PATOS também decidiu facilitar sua entrada para o grupo! Você não precisa fazer o firewall nem o load balancer, também: basta que você comprove que você contribuiu efetivamente para algum projeto open source.
+I also simplified the image flow. It used to take two round trips: one to ask for a random image's path, another to fetch that path. That only works because every backend currently reads the same folder; once each instance has its own filesystem, the balancer could route the two requests to different backends and ask instance B for a file only instance A has. Now `/random-image` returns the image bytes directly, with the file name riding along in an `X-Image-Name` header for the page to display: one click, one request, one backend. I added a guard against path traversal as well, since a raw socket server joins user input straight onto a file path with nothing in between.
 
-#### O que fazer para concorrer nesta categoria do PSEL?
+The proxy foundation is laid, but it currently forwards everything to a single hardcoded backend at `localhost:8081`, and answers with a 502 when that one is down because it has nowhere else to turn. Turning that constant into a proper pool (with round-robin selection and health checks) is the job for the coming days.
 
-O fork deste repositório continua sendo obrigatório, para que possamos analisar os envios de todos de uma forma mais padronizada. Quando tudo estiver pronto, mande um pull request e nós avaliaremos o conteúdo da sua aplicação para o PSEL.
+### Day 3: Backend Pool, Health Checks & Least-Connections Balancing
 
-Você deve **obrigatoriamente** fazer um README contendo os seguintes requisitos:
+The balancer finally has something to balance. Where there was one hardcoded address there are now five backends, with a health check quietly pinging each of them every three seconds; it only speaks up when one dies or comes back, which makes the terminal feel a little like listening for a heartbeat. Requests go to whichever healthy backend is least busy, and if one refuses the connection the balancer shrugs and tries the next. I also shut the door on asking for a specific image: you get what the random draw gives you.
 
-- Nome do projeto Open Source e linguagens utilizadas nele
-- Link do repositório do projeto
-- Link do seu pull request aceito
-- Explicação detalhada da sua contribuição
-- Detalhes de como você descobriu esse projeto e como você decidiu fazer sua contribuição para o mesmo, descrevendo os desafios que você enfrentou e sua experiência num geral durante processo de contribuição
+Then I got curious about something small, and it turned into the lesson of the day. Requests here take about two milliseconds, so by the time the balancer looks, every backend reports zero open connections; they are always tied. Which means the tie-break, the part I had treated as a footnote, was quietly making every routing decision on its own. Breaking ties by lowest index sent forty requests in a row to the same backend. Forty. The other four just sat there, and nothing looked wrong at all. A random shuffle before the sort was enough to spread the same forty across all five.
 
-> Esses são os principais pontos de avaliação do seu processo seletivo.
+Tomorrow, uploads, which means teaching both sides to read past the first line of a request for the very first time.
 
-Se você tiver feito tudo, nós o convocaremos para uma entrevista, assim como nos outros desafios!
+### Day 4: Uploads, a Parser of Its Own & the Timeouts I Never Wrote
 
-``Boa Sorte!``
+I wanted today to be the last one. This project had been building up in my head for months, far longer than it has existed as a folder on disk, and I sat down this morning meaning to finish it rather than to improve it. That turned out to be a useful way to work: instead of adding what would be interesting, I kept asking what was still missing.
 
-## Ajuda
+The first answer was the parser. Day 3 ended with a promise to teach both sides to read past the first line of a request, and the moment I started writing that, the parsing stopped being a `strings.Fields` call and became a set of rules: where the header block ends, how long a line may be, how many bytes of body to expect. Rules are the kind of thing two copies of a file quietly stop agreeing about. That is exactly the disagreement I had been avoiding since Day 2, when I chose to rebuild the request line by hand rather than forward raw bytes, so before writing the header parsing twice I moved it into a package both tiers import. The balancer and the backend now read a request through the same code, and the function that writes a request to a backend sits twenty lines below the one that reads it, which is the closest thing to a guarantee I can give myself that they will stay in step.
 
-Achou alguma modalidade do PSEL muito difícil? Não fique desanimado, a dificuldade é proposital, mas garantimos que o processo seletivo **não é impossível**. Você sempre pode perguntar para algum membro do PATOS sobre dicas para fazer o PSEL e também discutir com outros candidatos sobre como cada um está fazendo o processo seletivo.
+Then, finally, uploads. The body is the raw file, with the name in the path, which meant no `multipart/form-data` and therefore no hand-written boundary scanner: the single largest piece of tedium I have managed to avoid in this whole project. What surprised me is how little of the work was the upload and how much of it was refusing one. An extension is a claim, a `Content-Type` is a claim, so the first bytes get checked against the PNG and JPEG signatures instead. Names are narrowed to a small character set, which means nothing ever needs decoding and nothing can climb out of the folder. Each file is written under a name derived from its own contents, so two files cannot collide and uploading the same image twice overwrites it instead of breeding copies. And every write goes to a temporary file that is renamed into place, because a rename is atomic and a half written image is otherwise something a random draw can serve. That last detail made me finally filter the folder by extension, a loose end that had been sitting there since Day 2.
 
-**Mas lembrem-se, a entrega do processo seletivo é INDIVIDUAL, ou seja: vocês podem se ajudar a fazer o PSEL, mas cada um deve entregar o seu!** 
+The real lesson came from going looking for trouble once I thought I was done. There was exactly one timeout in the entire project, on the health check, and none at all on the path a request actually travels. Every backend I had killed in four days was a local process, and a local process refuses connections instantly, so I had been testing only the polite kind of failure. A backend that accepts your connection and then says nothing at all would have held a request open forever. Four lines fixed it, and then a smaller mistake taught me something better: my first attempt gave the client and the backend the same thirty second deadline, so they expired in the same instant and the balancer had no time left to explain itself. The browser got an empty reply where a 502 belonged. A proxy's patience with a backend has to run out before its client's patience runs out with it, otherwise giving up is indistinguishable from crashing.
 
-> Vale ressaltar também que não é uma boa ideia plagiar o projeto do coleguinha, já que nós sempre comparamos os projetos.
+The last thing I did was delete code. Uploads had been going to all five backends, which is the right answer if each one owns its own filesystem, and no answer at all for five processes sharing one folder. I decided the shared store is the architecture rather than a shortcut, and took the replication out. Finishing, it turns out, looks a lot less like writing than I expected.
 
-Além disso, a intenção dos desafios de código é avaliar o quão longe vocês estão dispostos a pesquisarem e aprenderem por conta própria. **Não se sintam pressionados a fazer todos os pontos essenciais de avaliação e todos os diferenciais! Foquem em entregar o básico bem feito!**
-
-Abaixo disponibilizamos alguns links para sites que podem ser úteis para o andamento do projeto de vocês.
-
-#### Links de apoio
-
-- Firewall escrito em C com poucas funcionalidades para referência: https://github.com/pagekite/libunaccept
-
-- Como funciona um firewall: https://www.fortinet.com/resources/cyberglossary/how-does-a-firewall-work
-
-- Como funciona um load balancer: https://aws.amazon.com/what-is/load-balancing/
-
-- Como funciona um servidor HTTP básico: https://medium.com/@gabriellamedas/the-http-server-explained-c41380307917
-
-
+So this is the line I am drawing. Every commit after this one is documentation: a comment reworded, a small fix if something surfaces, nothing that changes how any of it works. The bulky work is done. After months of meaning to get here, the satisfying part turns out not to be the code that runs, it is that there is nothing left I am putting off.
