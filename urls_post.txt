@@ -1,0 +1,10 @@
+url = "http://localhost:8080/stress_up1.jpg"
+data-binary = "@fileserver/files/tarot.jpg"
+next
+
+url = "http://localhost:8080/stress_up2.jpg"
+data-binary = "@fileserver/files/tarot.jpg"
+next
+
+url = "http://localhost:8080/stress_up3.jpg"
+data-binary = "@fileserver/files/tarot.jpg"

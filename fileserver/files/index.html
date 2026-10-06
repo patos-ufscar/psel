@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Servidor de arquivos
+    </title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #183642;
+            --muted: #5d7379;
+            --paper: #f4f1ea;
+            --panel: #fffdf8;
+            --accent: #c45d3b;
+            --accent-dark: #963f2b;
+            --line: #ded8ca;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Georgia, "Times New Roman", serif;
+            line-height: 1.6;
+        }
+
+        header {
+            padding: 4rem 1.5rem 3rem;
+            background: var(--ink);
+            color: var(--paper);
+        }
+
+        header h1,
+        header p {
+            max-width: 48rem;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            line-height: 1.1;
+        }
+
+        header p {
+            margin-top: 0;
+            margin-bottom: 0;
+            color: #c9d8d6;
+            font-size: 1.1rem;
+        }
+
+        main {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        section {
+            padding: 1.5rem;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--accent);
+            box-shadow: 0 0.75rem 2rem rgba(24, 54, 66, 0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        ul {
+            display: grid;
+            gap: 0.75rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        li {
+            border-bottom: 1px solid var(--line);
+        }
+
+        li:last-child {
+            border-bottom: 0;
+        }
+
+        a {
+            display: block;
+            padding: 0.65rem 0.25rem;
+            color: var(--accent-dark);
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus-visible {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 38rem) {
+            header {
+                padding-top: 3rem;
+                padding-bottom: 2.5rem;
+            }
+
+            main {
+                padding-top: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>
+            Servidor de arquivos do Load Balancer
+        </h1>
+        <p>
+            Essa página é responsável por atribuir uma navegação gráfica para os arquivos
+        </p>
+    </header>
+    <main>
+        <section>
+            <h2>
+                Arquivos disponíveis
+            </h2>
+            <ul>
+                <!-- lista de arquivos sera inserida aqui-->
+            </ul>
+        </section>
+    </main>
+</body>
+
+</html>

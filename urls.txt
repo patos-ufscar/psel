@@ -1,0 +1,10 @@
+url = "http://localhost:8080/tarot.jpg"
+output = "stress_teste1.jpg"
+next
+
+url = "http://localhost:8080/tarot.jpg"
+output = "stress_teste2.jpg"
+next
+
+url = "http://localhost:8080/tarot.jpg"
+output = "stress_teste3.jpg"

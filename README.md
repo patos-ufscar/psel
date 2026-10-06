@@ -1,3 +1,161 @@
+# Load Balancer e Servidor de Arquivos
+
+## Sobre o projeto
+
+Este projeto implementa, do zero e em Go, um servidor de arquivos e um load balancer HTTP.
+
+O servidor de arquivos utiliza conexões TCP e parsing manual de requisições HTTP para realizar upload e download de arquivos. O load balancer também interpreta as requisições HTTP, distribui os clientes entre múltiplos backends usando Round Robin e encaminha as respostas ao cliente.
+
+Como diferenciais, o projeto possui health check dos backends, logs das requisições, configuração por linha de comando e uma interface web simples que lista automaticamente os arquivos disponíveis para download.
+
+## Arquitetura
+
+O cliente se conecta ao load balancer pela porta `8080`. O load balancer faz o parsing manual da requisição, escolhe um backend saudável usando Round Robin e encaminha a requisição para uma das instâncias do servidor de arquivos.
+
+```text
+Cliente
+     |
+     | HTTP :8080
+     v
+Load balancer
+     |
+     +-- Fileserver :8081
+     +-- Fileserver :8082
+     +-- Fileserver :8083
+```
+
+O pacote `internal/httpcore` concentra a lógica compartilhada de parsing HTTP, montagem de respostas e aceitação das conexões TCP.
+
+## Como executar
+
+### 1. Iniciar os servidores de arquivos
+
+Execute cada instância em um terminal separado, sempre dentro do diretório `fileserver`:
+
+```bash
+go run . 8081
+```
+
+```bash
+go run . 8082
+```
+
+```bash
+go run . 8083
+```
+
+### 2. Iniciar o load balancer
+
+A partir da raiz do projeto, execute:
+
+```bash
+go run ./loadbalancer \
+    -port 8080 \
+    -backends localhost:8081,localhost:8082,localhost:8083
+```
+
+### 3. Acessar a aplicação
+
+Abra no navegador:
+
+```text
+http://localhost:8080/
+```
+
+## Como testar
+
+Com os três servidores de arquivos e o load balancer em execução, os testes podem ser feitos pelo navegador ou com `curl`.
+
+### Requisição GET
+
+```bash
+curl -i http://localhost:8080/
+```
+
+Para baixar um arquivo específico:
+
+```bash
+curl -i http://localhost:8080/tarot.jpg
+```
+
+### Upload
+
+O upload utiliza o corpo cru da requisição. O caminho da URL define o nome do arquivo salvo:
+
+```bash
+curl -i \
+    -X POST \
+    --data-binary @fileserver/files/teste.txt \
+    http://localhost:8080/arquivo-enviado.txt
+```
+
+Depois, o arquivo pode ser acessado por:
+
+```text
+http://localhost:8080/arquivo-enviado.txt
+```
+
+### Concorrência
+
+O arquivo `urls.txt` contém várias requisições para o load balancer. Para executá-las em paralelo:
+
+```bash
+curl --parallel \
+    --parallel-immediate \
+    --parallel-max 3 \
+    --config urls.txt
+```
+
+Durante os testes, os logs do load balancer mostram o backend escolhido, o status HTTP e o tempo de atendimento.
+
+### Health check
+
+Para observar o health check, encerre temporariamente um dos servidores de arquivos. O load balancer deve detectar a falha e deixar esse backend fora da rotação. Ao iniciar o servidor novamente, ele deve voltar a ser considerado após uma nova verificação.
+
+## Funcionalidades implementadas
+
+- Servidor TCP concorrente, com uma goroutine para cada conexão.
+- Parsing manual da request line e dos headers HTTP.
+- Respostas HTTP construídas manualmente.
+- Download de arquivos por meio de requisições `GET`.
+- Suporte ao método `HEAD`.
+- Upload de arquivos por meio de requisições `POST` e `Content-Length`.
+- Proteção contra tentativas simples de path traversal.
+- Suporte a diferentes tipos de arquivo e detecção manual de `Content-Type`.
+- Load balancer HTTP de camada 7.
+- Distribuição de requisições usando Round Robin.
+- Escolha thread-safe do próximo backend com operação atômica.
+- Health check periódico dos backends.
+- Remoção temporária de backends indisponíveis da rotação.
+- Logs com backend utilizado, status HTTP e duração da requisição.
+- Configuração da porta e dos backends por flags de linha de comando.
+- Interface web com listagem automática dos arquivos disponíveis.
+
+## Interface web
+
+A interface web é servida quando o cliente acessa a rota `/`. O servidor lê o arquivo `files/index.html` e procura o marcador reservado para a lista de arquivos.
+
+Em seguida, o Go lê o diretório `files/`, ignora subdiretórios e gera automaticamente um link HTML para cada arquivo encontrado. A lista gerada substitui o marcador antes de a página ser enviada ao cliente.
+
+A interface utiliza HTML e CSS, sem JavaScript ou bibliotecas externas. Os arquivos podem ser selecionados para download pelos links exibidos na página; os uploads continuam sendo feitos por requisições `POST` com `curl`.
+
+## Fontes consultadas
+
+- [Coding Challenges: Build Your Own Load Balancer](https://codingchallenges.fyi/challenges/challenge-load-balancer/)
+- [ThePrimeagen: série sobre TCP e HTTP](https://www.youtube.com/watch?v=ZSDYx9eOiqo&t=554s)
+- [Vídeo sobre implementação de HTTP](https://www.youtube.com/watch?v=eSVP7VbSLUI&t=1072s)
+- [Load balancer em Go](https://oneuptime.com/blog/post/2026-03-20-load-balancer-go-ipv4-routing/view)
+- [kasvith/simplelb](https://github.com/kasvith/simplelb)
+- [Load balancer em Go](https://medium.com/@owlwalks/load-balancer-at-your-fingertips-golang-ea23d7aaee82)
+- [Conceitos de load balancing em Go](https://medium.com/@chaithanya970/load-balancer-9e33c2b647f0)
+
+## Jornada e aprendizados
+
+Este desafio representou o maior desafio de programação do curso. No início, eu não sabia o que era um load balancer, muito menos como implementá-lo em qualquer linguagem.
+
+Escolhi Go porque queria aprender uma linguagem nova e, ao mesmo tempo, entender como um load balancer funciona internamente. No começo, parecia impossível sair do zero, mas a pesquisa, as referências consultadas e as dúvidas discutidas ao longo do desenvolvimento permitiram construir o projeto passo a passo.
+
+
 # PATOS/POMBO PSEL 2.0
 
 Tá sempre aberto, só enviar o PR
